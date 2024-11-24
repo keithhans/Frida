@@ -21,8 +21,9 @@ from brush_stroke import BrushStroke
 
 from paint_utils3 import canvas_to_global_coordinates
 from robot import *
-from camera.dslr import WebCam, SimulatedWebCam
-
+#from camera.dslr import WebCam, SimulatedWebCam
+from camera.opencv_camera import WebCam
+from camera.dslr import SimulatedWebCam
 
 PERPENDICULAR_QUATERNION = np.array([1.77622069e-04,   9.23865441e-01,  -3.82717408e-01,  -1.73978366e-05])
 
