@@ -48,7 +48,7 @@ class WebCam():
             canvas = Resize((h, w), antialias=True)(canvas)
         return canvas
 
-    def calibrate_canvas(self):
+    def calibrate_canvas(self, use_cache=False):
         """Interactive calibration to find canvas corners and compute homography"""
         import matplotlib.pyplot as plt
         img = self.get_rgb_image()
