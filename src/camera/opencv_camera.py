@@ -5,7 +5,7 @@ import torch
 from torchvision.transforms import Resize
 
 class WebCam():
-    def __init__(self, opt,webcam_id=0):
+    def __init__(self, opt=None, webcam_id=0):
         """Initialize the webcam using OpenCV VideoCapture
         Args:
             webcam_id (int): Camera device ID (default: 0)
@@ -15,7 +15,7 @@ class WebCam():
             raise RuntimeError(f"Failed to open webcam with ID {webcam_id}")
         self.H_canvas = None
         self.opt = opt
-        
+
     def get_rgb_image(self):
         """Capture and return an RGB image from the webcam"""
         ret, frame = self.webcam.read()
