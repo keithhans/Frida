@@ -71,7 +71,7 @@ class MyCobot280(Robot, object):
             c = (x, y, z, roll, pitch, yaw)
             print(f"move to {c}")
             self.mc.send_coords([x, y, z, roll, pitch, yaw], 50, 1)
-            time.sleep(0.2)
+            time.sleep(0.3)
 
 class XArm(Robot, object):
     '''
