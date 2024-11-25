@@ -14,6 +14,9 @@ run_name = '' + date_and_time.strftime("%m_%d__%H_%M_%S")
 opt.writer = TensorBoard('{}/{}'.format('tensorboard', run_name))
 #opt.writer.add_text('args', str(sys.argv), 0)
 
-opt.robot=None
+#opt.robot=None
+
+opt.ink=True
+
 
 painter = Painter(opt) 

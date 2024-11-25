@@ -140,7 +140,7 @@ class BrushStroke(nn.Module):
         self.MAX_ALPHA = opt.MAX_ALPHA
         self.MAX_BEND = opt.MAX_BEND
 
-        if color is None: color=(torch.rand(3).to(device)*.4)+0.3
+        if color is None: color=(torch.rand(3)*.4)+0.3
         if a is None: a=(torch.rand(1)*2-1)*3.14
         if xt is None: xt=(torch.rand(1)*2-1)
         if yt is None: yt=(torch.rand(1)*2-1)
@@ -172,7 +172,7 @@ class BrushStroke(nn.Module):
         if not ink:
             self.color_transform = nn.Parameter(color)
         else:
-            self.color_transform = torch.zeros(3).to(device)
+            self.color_transform = torch.zeros(3)
 
     def forward(self, h, w, param2img):
         # # Do rigid body transformation

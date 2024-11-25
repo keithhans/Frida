@@ -59,7 +59,7 @@ class WebCam():
         
         plt.imshow(img_rgb)
         plt.title("Select corners of canvas. First is top-left, then clock-wise.")
-        self.canvas_points = np.array(plt.ginput(n=4))
+        self.canvas_points = np.array(plt.ginput(n=4, timeout=300))
         true_points = np.array([[0,0], [w,0], [w,h], [0,h]])
         self.H_canvas, _ = cv2.findHomography(self.canvas_points, true_points)
         

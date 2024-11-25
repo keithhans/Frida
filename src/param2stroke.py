@@ -37,7 +37,7 @@ def get_param2img(opt, device='cuda'):
     param2img.load_state_dict(torch.load(
         os.path.join(opt.cache_dir, 'param2img.pt')))
     param2img.eval()
-    param2img.to(device)
+    #param2img.to(device)
 
     def forward(param, h_render_pix, w_render_pix):
         # Figure out what to resize the output of param2image should be based on the desired render size
@@ -82,7 +82,7 @@ def get_n_params(model):
 
 
 def to_full_param(length, bend, z, alpha=0.0, device='cuda'):
-    full_param = torch.zeros((1,4)).to(device)
+    full_param = torch.zeros((1,4))#.to(device)
     
     full_param[0,0] = length 
     full_param[0,1] = bend 
@@ -363,11 +363,11 @@ def train_param2stroke(opt, device='cuda'):
 
     h, w = strokes[0].shape[0], strokes[0].shape[1]
 
-    strokes = strokes.to(device)
-    parameters = parameters.to(device)
+    #strokes = strokes.to(device)
+    #parameters = parameters.to(device)
 
     trans = StrokeParametersToImage() 
-    trans = trans.to(device)
+    #trans = trans.to(device)
     print('# parameters in Param2Image model:', get_n_params(trans))
     optim = torch.optim.Adam(trans.parameters(), lr=1e-3)#, weight_decay=1e-5)
     best_model = copy.deepcopy(trans)
@@ -390,7 +390,7 @@ def train_param2stroke(opt, device='cuda'):
             break # all done :)
         optim.zero_grad()
 
-        noise = torch.randn(train_parameters.shape).to(device)*param_stds[None,:]*0.15 # For robustness
+        noise = torch.randn(train_parameters.shape)*param_stds[None,:]*0.15 # For robustness
         pred_strokes = trans(train_parameters + noise)
 
         loss = shift_invariant_loss(pred_strokes, train_strokes)

@@ -61,6 +61,8 @@ class Painter():
             self.robot = Franka(debug=True)
         elif opt.robot == "xarm":
             self.robot = XArm(opt.xarm_ip, debug=True)
+        elif opt.robot == "mycobot":
+            self.robot = MyCobot280(debug=True)
         elif opt.robot == None:
             self.robot = SimulatedRobot(debug=True)
         if opt.simulate:
@@ -120,6 +122,7 @@ class Painter():
         self.opt.RAG_POSTITION.append(self.Z_CANVAS)
 
         self.opt.PALLETTE_POSITION.append(self.Z_CANVAS- 0.2*self.Z_RANGE)
+
         # self.opt.PAINT_DIFFERENCE = 0.03976
 
         # while True: 
@@ -151,6 +154,8 @@ class Painter():
 
         # Ensure that x,y on the canvas photograph is x,y for the robot interacting with the canvas
         self.coordinate_calibration(use_cache=opt.use_cache)
+
+        return
 
         # self.paint_fill_in_library() ######################################################
 
@@ -189,12 +194,16 @@ class Painter():
         # Initial spot
         if not self.opt.simulate:
             # self.robot.fa.reset_joints()
+            x = 0
             y = 0.4 
             if self.opt.robot == 'franka':
                 y = 0.4
             elif self.opt.robot == 'xarm':
                 y = 0.1
-            self.move_to_trajectories([[0,y,self.opt.INIT_TABLE_Z]], [None])
+            elif self.opt.robot == 'mycobot':
+                x = 0.210
+                y = 0
+            self.move_to_trajectories([[x,y,self.opt.INIT_TABLE_Z]], [None])
 
     def move_to_trajectories(self, positions, orientations):
         for i in range(len(orientations)):
@@ -302,7 +311,7 @@ class Painter():
         self.move_to_trajectories(positions, orientations)
 
 
-    def set_height(self, x, y, z, move_amount=0.0015):
+    def set_height(self, x, y, z, move_amount=0.001):
         '''
         Let the user use keyboard keys to lower the paint brush to find 
         how tall something is (z).
@@ -423,6 +432,8 @@ class Painter():
         canvas = self.camera.get_canvas()
         canvas_og = canvas.copy()
         canvas_width_pix, canvas_height_pix = canvas.shape[1], canvas.shape[0]
+        print("canvas_width_pix", canvas_width_pix, "canvas_height_pix", canvas_height_pix)
+
 
         # Points for computing the homography
         t = 0.1 # How far away from corners to paint
@@ -432,7 +443,8 @@ class Painter():
             for j in np.linspace(0.1, 0.9, 4):
                 homography_points.append([i,j])
 
-        
+        print("homography_points", homography_points)
+        import time
         i = 0
         for canvas_coord in homography_points:
             if not self.opt.ink:
@@ -443,12 +455,18 @@ class Painter():
             x_glob,y_glob,_ = canvas_to_global_coordinates(x_prop,y_prop,None, self.opt) # Coord in meters from robot
 
             # Paint the point
-            dot_stroke = BrushStroke(self.opt).dot_stroke(self.opt)
+            dot_stroke = BrushStroke(self.opt, device='cpu').dot_stroke(self.opt)
             dot_stroke.execute(self, x_glob, y_glob, 0)
+            time.sleep(5)
+         
 
         # Picture of the new strokes
         self.to_neutral()
+        time.sleep(8)
+        
         canvas = self.camera.get_canvas().astype(np.float32)
+        plt.imshow(canvas, cmap='gray', vmin=0, vmax=1)
+        plt.show()
 
         sim_coords = []
         real_coords = []
@@ -465,8 +483,9 @@ class Painter():
                 window = window.mean(axis=2)
                 window /= 255.
                 window = 1 - window
-                # plt.imshow(window, cmap='gray', vmin=0, vmax=1)
-                # plt.show()
+                print(f"{x_prop} {y_prop}")
+                plt.imshow(window, cmap='gray', vmin=0, vmax=1)
+                plt.show()
                 window = window > 0.5
                 window[:int(0.05*window.shape[0])] = 0
                 window[int(0.95*window.shape[0]):] = 0
@@ -474,9 +493,9 @@ class Painter():
                 window[:,int(0.95*window.shape[1]):] = 0
                 window = median_filter(window, size=(9,9))
                 dark_y, dark_x = window.nonzero()
-                # plt.matshow(window)
-                # plt.scatter(int(np.median(dark_x)), int(np.median(dark_y)))
-                # plt.show()
+                plt.matshow(window)
+                plt.scatter(int(np.median(dark_x)), int(np.median(dark_y)))
+                plt.show()
                 # fig, ax = plt.subplots(1)
                 fig = plt.figure()
                 ax = fig.gca()
@@ -503,30 +522,30 @@ class Painter():
         
         # H, _ = cv2.findHomography(real_coords, sim_coords)      
         H, _ = cv2.findHomography(real_coords_global, sim_coords_global)  
-        # canvas_warp = cv2.warpPerspective(canvas.copy(), H, (canvas.shape[1], canvas.shape[0]))
+        canvas_warp = cv2.warpPerspective(canvas.copy(), H, (canvas.shape[1], canvas.shape[0]))
 
-        # if debug:
-        #     fix, ax = plt.subplots(1,2)
-        #     ax[0].imshow(canvas)
-        #     ax[0].scatter(real_coords[:,0], real_coords[:,1], c='r')
-        #     ax[0].scatter(sim_coords[:,0], sim_coords[:,1], c='g')
-        #     ax[0].set_title('non-transformed photo')
+        if debug:
+            fix, ax = plt.subplots(1,2)
+            ax[0].imshow(canvas)
+            ax[0].scatter(real_coords[:,0], real_coords[:,1], c='r')
+            ax[0].scatter(sim_coords[:,0], sim_coords[:,1], c='g')
+            ax[0].set_title('non-transformed photo')
 
-        #     ax[1].imshow(canvas_warp)
-        #     ax[1].scatter(real_coords[:,0], real_coords[:,1], c='r')
-        #     ax[1].scatter(sim_coords[:,0], sim_coords[:,1], c='g')
-        #     ax[1].set_title('warped photo')
-        #     plt.show()
-        # if debug:
-        #     plt.imshow(canvas)
-        #     plt.scatter(real_coords[:,0], real_coords[:,1], c='r')
-        #     plt.scatter(sim_coords[:,0], sim_coords[:,1], c='g')
-        #     sim_coords = np.array([int(.5*canvas_width_pix),int(.5*canvas_height_pix),1.])
-        #     real_coords = H.dot(sim_coords)
-        #     real_coords /= real_coords[2]
-        #     plt.scatter(real_coords[0], real_coords[1], c='r')
-        #     plt.scatter(sim_coords[0], sim_coords[1], c='g')
-        #     plt.show()
+            ax[1].imshow(canvas_warp)
+            ax[1].scatter(real_coords[:,0], real_coords[:,1], c='r')
+            ax[1].scatter(sim_coords[:,0], sim_coords[:,1], c='g')
+            ax[1].set_title('warped photo')
+            plt.show()
+        if debug:
+            plt.imshow(canvas)
+            plt.scatter(real_coords[:,0], real_coords[:,1], c='r')
+            plt.scatter(sim_coords[:,0], sim_coords[:,1], c='g')
+            sim_coords = np.array([int(.5*canvas_width_pix),int(.5*canvas_height_pix),1.])
+            real_coords = H.dot(sim_coords)
+            real_coords /= real_coords[2]
+            plt.scatter(real_coords[0], real_coords[1], c='r')
+            plt.scatter(sim_coords[0], sim_coords[1], c='g')
+            plt.show()
 
         self.H_coord = H
         # Cache it

@@ -35,6 +35,44 @@ class Robot:
     def go_to_cartesian_pose(self, positions, orientations, precise=False):
         raise Exception("This method must be implemented")
 
+class MyCobot280(Robot, object):
+    '''
+        Low-level action functionality of the robot.
+    '''
+    def __init__(self, debug):
+        from pymycobot import MyCobot
+        self.debug_bool = debug
+        self.mc = MyCobot("/dev/ttyAMA0", 1000000)
+        self.mc.set_fresh_mode(0)
+
+    def debug(self, msg):
+        if self.debug_bool:
+            print(msg)
+
+    def good_morning_robot(self):
+        print("reset to initial pose")
+        self.mc.send_angles([0, 0, -90, 0, 0, 0], 50)
+
+    def good_night_robot(self):
+        pass
+
+    def go_to_cartesian_pose(self, positions, orientations, speed=50):
+        # positions in meters
+        # orientations are ignored
+        positions = np.array(positions)
+        if len(positions.shape) == 1:
+            positions = positions[None,:]
+
+        for i in range(len(positions)):
+            x,y,z = positions[i][0], positions[i][1], positions[i][2]
+            x,y,z = x*1000, y*1000, z*1000 #m to mm
+            
+            roll, pitch, yaw = -180, 0, -90 #euler[0], euler[1], euler[2]
+            c = (x, y, z, roll, pitch, yaw)
+            print(f"move to {c}")
+            self.mc.send_coords([x, y, z, roll, pitch, yaw], 50, 1)
+            time.sleep(0.2)
+
 class XArm(Robot, object):
     '''
         Low-level action functionality of the robot.
