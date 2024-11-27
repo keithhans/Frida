@@ -44,6 +44,9 @@ class MyCobot280(Robot, object):
         self.debug_bool = debug
         self.mc = MyCobot("/dev/ttyAMA0", 1000000)
         self.mc.set_fresh_mode(0)
+        self.x = None
+        self.y = None
+        self.z = None
 
     def debug(self, msg):
         if self.debug_bool:
@@ -71,7 +74,13 @@ class MyCobot280(Robot, object):
             c = (x, y, z, roll, pitch, yaw)
             print(f"move to {c}")
             self.mc.send_coords([x, y, z, roll, pitch, yaw], 50, 1)
-            time.sleep(0.3)
+            delay = 0.3
+            if self.x == None or self.y == None or self.z == None:
+                delay = 2
+            elif abs(self.x - x) > 15 or abs(self.y - y) > 15 or abs(self.z - z) > 15:
+                delay = 1
+            time.sleep(delay)
+            self.x, self.y, self.z = x, y, z
 
 class RealMan(Robot, object):
     '''
