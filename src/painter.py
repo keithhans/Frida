@@ -157,8 +157,6 @@ class Painter():
         # Ensure that x,y on the canvas photograph is x,y for the robot interacting with the canvas
         self.coordinate_calibration(use_cache=opt.use_cache)
 
-        return
-
         # self.paint_fill_in_library() ######################################################
 
         # Get brush strokes from stroke library
@@ -487,8 +485,8 @@ class Painter():
                 window /= 255.
                 window = 1 - window
                 print(f"{x_prop} {y_prop}")
-                plt.imshow(window, cmap='gray', vmin=0, vmax=1)
-                plt.show()
+                # plt.imshow(window, cmap='gray', vmin=0, vmax=1)
+                # plt.show()
                 window = window > 0.5
                 window[:int(0.05*window.shape[0])] = 0
                 window[int(0.95*window.shape[0]):] = 0
@@ -496,14 +494,14 @@ class Painter():
                 window[:,int(0.95*window.shape[1]):] = 0
                 window = median_filter(window, size=(9,9))
                 dark_y, dark_x = window.nonzero()
-                plt.matshow(window)
-                plt.scatter(int(np.median(dark_x)), int(np.median(dark_y)))
-                plt.show()
+                # plt.matshow(window)
+                # plt.scatter(int(np.median(dark_x)), int(np.median(dark_y)))
+                # plt.show()
                 # fig, ax = plt.subplots(1)
-                # fig = plt.figure()
-                # ax = fig.gca()
-                # ax.matshow(window)
-                # ax.scatter(int(np.median(dark_x)), int(np.median(dark_y)))
+                fig = plt.figure()
+                ax = fig.gca()
+                ax.matshow(window)
+                ax.scatter(int(np.median(dark_x)), int(np.median(dark_y)))
                 self.writer.add_figure('coordinate_homography/{}'.format(len(real_coords_global)), fig, 0)
 
                 x_pix_real = int(np.median(dark_x)) + x_pix-w
