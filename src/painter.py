@@ -464,9 +464,10 @@ class Painter():
         self.to_neutral()
         time.sleep(8)
         
-        canvas = self.camera.get_canvas().astype(np.float32)
-        plt.imshow(canvas, cmap='gray', vmin=0, vmax=1)
+        canvas = self.camera.get_canvas()
+        plt.imshow(canvas)
         plt.show()
+        canvas = canvas.astype(np.float32)
 
         sim_coords = []
         real_coords = []
@@ -497,10 +498,10 @@ class Painter():
                 plt.scatter(int(np.median(dark_x)), int(np.median(dark_y)))
                 plt.show()
                 # fig, ax = plt.subplots(1)
-                fig = plt.figure()
-                ax = fig.gca()
-                ax.matshow(window)
-                ax.scatter(int(np.median(dark_x)), int(np.median(dark_y)))
+                # fig = plt.figure()
+                # ax = fig.gca()
+                # ax.matshow(window)
+                # ax.scatter(int(np.median(dark_x)), int(np.median(dark_y)))
                 self.writer.add_figure('coordinate_homography/{}'.format(len(real_coords_global)), fig, 0)
 
                 x_pix_real = int(np.median(dark_x)) + x_pix-w
@@ -526,26 +527,26 @@ class Painter():
 
         if debug:
             fix, ax = plt.subplots(1,2)
-            ax[0].imshow(canvas)
+            ax[0].imshow(canvas.astype(np.uint8))
             ax[0].scatter(real_coords[:,0], real_coords[:,1], c='r')
             ax[0].scatter(sim_coords[:,0], sim_coords[:,1], c='g')
             ax[0].set_title('non-transformed photo')
 
-            ax[1].imshow(canvas_warp)
+            ax[1].imshow(canvas_warp.astype(np.uint8))
             ax[1].scatter(real_coords[:,0], real_coords[:,1], c='r')
             ax[1].scatter(sim_coords[:,0], sim_coords[:,1], c='g')
             ax[1].set_title('warped photo')
             plt.show()
-        if debug:
-            plt.imshow(canvas)
-            plt.scatter(real_coords[:,0], real_coords[:,1], c='r')
-            plt.scatter(sim_coords[:,0], sim_coords[:,1], c='g')
-            sim_coords = np.array([int(.5*canvas_width_pix),int(.5*canvas_height_pix),1.])
-            real_coords = H.dot(sim_coords)
-            real_coords /= real_coords[2]
-            plt.scatter(real_coords[0], real_coords[1], c='r')
-            plt.scatter(sim_coords[0], sim_coords[1], c='g')
-            plt.show()
+        # if debug:
+        #     plt.imshow(canvas.astype(np.uint8))
+        #     plt.scatter(real_coords[:,0], real_coords[:,1], c='r')
+        #     plt.scatter(sim_coords[:,0], sim_coords[:,1], c='g')
+        #     sim_coords = np.array([int(.5*canvas_width_pix),int(.5*canvas_height_pix),1.])
+        #     real_coords = H.dot(sim_coords)
+        #     real_coords /= real_coords[2]
+        #     plt.scatter(real_coords[0], real_coords[1], c='r')
+        #     plt.scatter(sim_coords[0], sim_coords[1], c='g')
+        #     plt.show()
 
         self.H_coord = H
         # Cache it
