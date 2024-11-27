@@ -18,6 +18,9 @@ class WebCam():
 
     def get_rgb_image(self):
         """Capture and return an RGB image from the webcam"""
+        # discard 4 images to handle some weird bug on raspery pi
+        for i in range(4):
+            self.webcam.read()
         ret, frame = self.webcam.read()
         if not ret:
             raise RuntimeError("Failed to capture image from webcam")
