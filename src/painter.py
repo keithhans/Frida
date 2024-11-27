@@ -19,7 +19,7 @@ import math
 import gzip
 from brush_stroke import BrushStroke
 
-from paint_utils3 import canvas_to_global_coordinates
+from paint_utils3 import canvas_to_global_coordinates, show_img
 from robot import *
 #from camera.dslr import WebCam, SimulatedWebCam
 from camera.opencv_camera import WebCam
@@ -96,7 +96,8 @@ class Painter():
         self.to_neutral()
 
         # Set how high the table is wrt the brush
-        if use_cache and os.path.exists(os.path.join(self.opt.cache_dir, "brush_tip_to_table_calib.json")):
+        #if use_cache and os.path.exists(os.path.join(self.opt.cache_dir, "brush_tip_to_table_calib.json")):
+        if True:    # override for now
             params = json.load(open(os.path.join(self.opt.cache_dir, "brush_tip_to_table_calib.json"),'rb'))
             self.Z_CANVAS = params['Z_CANVAS']
             self.Z_MAX_CANVAS = params['Z_MAX_CANVAS']
@@ -155,7 +156,8 @@ class Painter():
         self.opt.CANVAS_WIDTH_PIX, self.opt.CANVAS_HEIGHT_PIX = img.shape[1], img.shape[0]
 
         # Ensure that x,y on the canvas photograph is x,y for the robot interacting with the canvas
-        self.coordinate_calibration(use_cache=opt.use_cache)
+        # comment out for now
+        # self.coordinate_calibration(use_cache=opt.use_cache)
 
         # self.paint_fill_in_library() ######################################################
 
@@ -182,6 +184,8 @@ class Painter():
             self.opt.STROKE_LIBRARY_CANVAS_WIDTH_M = settings['CANVAS_WIDTH_M']
             self.opt.STROKE_LIBRARY_CANVAS_HEIGHT_M = settings['CANVAS_HEIGHT_M']
 
+        return  # bypass for now
+
         # if not os.path.exists(os.path.join(self.opt.cache_dir, 'param2img.pt')) or not use_cache:
         #     if not self.opt.dont_retrain_stroke_model:
         if not use_cache or not self.opt.dont_retrain_stroke_model:
@@ -204,6 +208,9 @@ class Painter():
                 x = 0.210
                 y = 0
             self.move_to_trajectories([[x,y,self.opt.INIT_TABLE_Z]], [None])
+            if self.opt.robot == 'mycobot':
+                import time
+                time.sleep(3)
 
     def move_to_trajectories(self, positions, orientations):
         for i in range(len(orientations)):
@@ -598,6 +605,7 @@ class Painter():
                     x, y = min(max(x,0.),1.), min(max(y,0.),1.) #safety
                     x,y,_ = canvas_to_global_coordinates(x,y,None,self.opt)
 
+                    print(f"random stroke at {x}, {y} y_offset_pix {y_offset_pix} h {h} length {stroke_length_m}")
                     
                     if not self.opt.ink:
                         if strokes_without_cleaning >= 12:
@@ -646,7 +654,7 @@ class Painter():
                     stroke = 1 - stroke 
                     # show_img(stroke)
                     stroke = stroke.mean(axis=2)
-                    # show_img(stroke)
+                    show_img(stroke)
                     if stroke.max() < 0.1 or stroke.min() > 0.8:
                         continue # Didn't make a mark
                     # stroke /= stroke.max()

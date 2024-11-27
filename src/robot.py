@@ -74,11 +74,11 @@ class MyCobot280(Robot, object):
             c = (x, y, z, roll, pitch, yaw)
             print(f"move to {c}")
             self.mc.send_coords([x, y, z, roll, pitch, yaw], 50, 1)
-            delay = 0.3
+            delay = 0.5
             if self.x == None or self.y == None or self.z == None:
-                delay = 2
+                delay = 3
             elif abs(self.x - x) > 15 or abs(self.y - y) > 15 or abs(self.z - z) > 15:
-                delay = 1
+                delay = 2
             time.sleep(delay)
             self.x, self.y, self.z = x, y, z
 
