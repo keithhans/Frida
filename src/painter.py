@@ -63,6 +63,8 @@ class Painter():
             self.robot = XArm(opt.xarm_ip, debug=True)
         elif opt.robot == "mycobot":
             self.robot = MyCobot280(debug=True)
+        elif opt.robot == "realman":
+            self.robot = RealMan(ip="192.168.1.18", debug=True)
         elif opt.robot == None:
             self.robot = SimulatedRobot(debug=True)
         if opt.simulate:

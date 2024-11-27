@@ -73,6 +73,43 @@ class MyCobot280(Robot, object):
             self.mc.send_coords([x, y, z, roll, pitch, yaw], 50, 1)
             time.sleep(0.3)
 
+class RealMan(Robot, object):
+    '''
+        Low-level action functionality of the robot.
+    '''
+    def __init__(self, ip = "192.168.1.18", debug = True):
+        from rm_arm import RoboticArm
+        self.debug_bool = debug
+        self.ip = ip
+        self.rm = RoboticArm()
+
+    def debug(self, msg):
+        if self.debug_bool:
+            print(msg)
+
+    def good_morning_robot(self):
+        print("reset to initial pose")
+        self.rm.connect(self.ip)
+        self.rm.moveL([-303.9, 50, 200, -3.14, -0.0, -0.359], 50)
+
+    def good_night_robot(self):
+        self.rm.disconnect()
+
+    def go_to_cartesian_pose(self, positions, orientations, speed=50):
+        # positions in meters
+        # orientations are ignored
+        positions = np.array(positions)
+        if len(positions.shape) == 1:
+            positions = positions[None,:]
+
+        for i in range(len(positions)):
+            x,y,z = positions[i][0], positions[i][1], positions[i][2]
+            x,y,z = x*1000, y*1000, z*1000 #m to mm
+            
+            c = (x, y, z, -3.14, -0.0, -0.359)
+            print(f"move to {c}")
+            self.rm.moveL([x, y, z, -3.14, -0.0, -0.359], speed)
+
 class XArm(Robot, object):
     '''
         Low-level action functionality of the robot.
