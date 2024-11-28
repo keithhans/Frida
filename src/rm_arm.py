@@ -490,6 +490,69 @@ class RoboticArm:
             print(f"Error during moveJ_P: {str(e)}")
             return False
 
+    def _move(self, x, y, z, speed=50):
+        x,y,z = x*1000, y*1000, z*1000 #m to mm
+        
+        c = (x, y, z, -3.14, -0.0, -0.359)
+        print(f"move to {c}")
+        self.moveL([x, y, z, -3.14, -0.0, -0.359], speed)
+
+        return None
+
+    def kb_control(self, move_amount=0.001):
+        '''
+        Let the user use keyboard keys to lower the paint brush to find 
+        how tall something is (z).
+        User preses escape to end, then this returns the x, y, z of the end effector
+        '''
+        
+        import getch
+
+
+        ret = self.get_current_arm_state()
+
+        if ret == None:
+            return
+
+        # 'pose': {
+        #     'position': list,    # [x, y, z] （毫米）
+        #     'orientation': list  # [rx, ry, rz] （弧度）
+        # },
+
+        curr_z = float(ret['pose']['position'][2])/1000  
+        curr_x = float(ret['pose']['position'][0])/1000
+        curr_y = float(ret['pose']['position'][1])/1000
+
+        print("Controlling height of brush.")
+        print("Use w/s for up/down to set the brush to touching the table")
+        print("Esc to quit.")
+
+        while True:
+            c = getch.getch()
+            
+            if c:
+                # print(c)
+                #catch Esc or ctrl-c
+                if c in ['\x1b', '\x03']:
+                    return curr_x, curr_y, curr_z
+                else:
+                    if c=='w':
+                        curr_z += move_amount
+                    elif c=='s':
+                        curr_z -= move_amount
+                    elif c=='d':
+                        curr_x += move_amount
+                    elif c=='a':
+                        curr_x -= move_amount
+                    elif c=='r':
+                        curr_y += move_amount
+                    elif c=='f':
+                        curr_y -= move_amount
+                    else:
+                        print('Use arrow keys up and down. Esc when done.')
+                    
+                    self._move(curr_x, curr_y,curr_z)
+
 def main():
     # 测试代码
     arm = RoboticArm()
@@ -560,6 +623,8 @@ def main():
             #     print("MoveJ_P test successful")
             # else:
             #     print("MoveJ_P test failed")
+
+            arm.kb_control()
                 
         finally:
             # 断开连接

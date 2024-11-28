@@ -13,6 +13,8 @@ class WebCam():
         self.webcam = cv2.VideoCapture(webcam_id)
         if not self.webcam.isOpened():
             raise RuntimeError(f"Failed to open webcam with ID {webcam_id}")
+        self.webcam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.webcam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.H_canvas = None
         self.opt = opt
 

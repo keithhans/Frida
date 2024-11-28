@@ -25,14 +25,14 @@ class Options(object):
 
     def initialize(self, parser):
         # Main parameters
-        parser.add_argument("--robot", type=str, default='mycobot', help='Which robot to use "mycobot280" "franka" "xarm" or "sawyer"')
+        parser.add_argument("--robot", type=str, default='realman', help='Which robot to use "realman" "mycobot280" "franka" "xarm" or "sawyer"')
         parser.add_argument("--xarm_ip", type=str, default='192.168.1.176', help='IP address of XArm.')
 
         parser.add_argument('--use_cache', action='store_true')
         parser.add_argument("--materials_json", type=str, 
-            default='../materials_mycobot.json', help='path to json file specifying material locations.')
+            default='../materials_realman.json', help='path to json file specifying material locations.')
         parser.add_argument("--cache_dir", type=str,
-            default='./caches/cache_mycobot', help='Where to store cached files.')
+            default='./caches/cache_realman', help='Where to store cached files.')
         parser.add_argument('--simulate', action='store_true', help="Don't execute. Just plan without a robot. Requires already cached data.")
         parser.add_argument('--ink', action='store_true')
         parser.add_argument('--paint_from_image', action='store_true')

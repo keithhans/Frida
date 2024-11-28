@@ -74,6 +74,7 @@ class Painter():
 
         self.robot.good_morning_robot()
 
+
         # Setup Camera
         while True: 
             try:
@@ -94,6 +95,7 @@ class Painter():
         self.H_coord = None # Translate coordinates based on faulty camera location
 
         self.to_neutral()
+
 
         # Set how high the table is wrt the brush
         #if use_cache and os.path.exists(os.path.join(self.opt.cache_dir, "brush_tip_to_table_calib.json")):
@@ -155,6 +157,8 @@ class Painter():
         img = self.camera.get_canvas()
         self.opt.CANVAS_WIDTH_PIX, self.opt.CANVAS_HEIGHT_PIX = img.shape[1], img.shape[0]
 
+
+
         # Ensure that x,y on the canvas photograph is x,y for the robot interacting with the canvas
         # comment out for now
         # self.coordinate_calibration(use_cache=opt.use_cache)
@@ -207,10 +211,14 @@ class Painter():
             elif self.opt.robot == 'mycobot':
                 x = 0.210
                 y = 0
+            elif self.opt.robot == 'realman':
+                x = -0.3039
+                y = 0.05
             self.move_to_trajectories([[x,y,self.opt.INIT_TABLE_Z]], [None])
             if self.opt.robot == 'mycobot':
                 import time
                 time.sleep(3)
+            
 
     def move_to_trajectories(self, positions, orientations):
         for i in range(len(orientations)):
@@ -603,6 +611,7 @@ class Painter():
 
                     x, y = x_offset_pix / w, 1 - (y_offset_pix / h)
                     x, y = min(max(x,0.),1.), min(max(y,0.),1.) #safety
+                    print(x, y, x_offset_pix, w, y_offset_pix, h)
                     x,y,_ = canvas_to_global_coordinates(x,y,None,self.opt)
 
                     print(f"random stroke at {x}, {y} y_offset_pix {y_offset_pix} h {h} length {stroke_length_m}")
