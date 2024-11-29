@@ -288,8 +288,10 @@ def train_param2stroke(opt, device='cuda'):
             hs_m = (opt.STROKE_LIBRARY_CANVAS_HEIGHT_M/2) - opt.MAX_BEND - xtra_room_vert_m
             he_m = hs_m + 2*xtra_room_vert_m + 2*opt.MAX_BEND
             # Convert from meters to pix
-            pix_per_m = w_og / opt.STROKE_LIBRARY_CANVAS_WIDTH_M
-            ws, we, hs, he = ws_m*pix_per_m, we_m*pix_per_m, hs_m*pix_per_m, he_m*pix_per_m
+            pix_per_m_w = w_og / opt.STROKE_LIBRARY_CANVAS_WIDTH_M
+            pix_per_m_h = h_og / opt.STROKE_LIBRARY_CANVAS_HEIGHT_M
+
+            ws, we, hs, he = ws_m*pix_per_m_w, we_m*pix_per_m_w, hs_m*pix_per_m_h, he_m*pix_per_m_h
             ws, we, hs, he = int(ws), int(we), int(hs), int(he)
             # print(ws, we, hs, he)
             s = s[:, hs:he, ws:we]
