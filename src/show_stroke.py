@@ -118,7 +118,7 @@ def main():
     opt.gather_options()
 
     # Initialize the param2img function
-    param2img = get_param2img(opt)
+    param2img = get_param2img(opt, device='cpu')
 
     # Create and show the visualizer
     visualizer = StrokeVisualizer(param2img, opt)
