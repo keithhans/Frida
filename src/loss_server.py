@@ -51,7 +51,7 @@ def clip_text_loss_endpoint():
     with torch.no_grad():
         text_features = clip_model.encode_text(clip.tokenize(text).to(device))
     
-    loss, _ = clip_text_loss(image_tensor, text_features, num_augs)
+    loss = clip_text_loss(image_tensor, text_features, num_augs)
     
     return jsonify({'loss': loss.item()})
 
@@ -62,7 +62,7 @@ def clip_fc_loss_endpoint():
     current_tensor = decode_image_data(data['current'])
     num_augs = data.get('num_augs', 30)
     
-    loss, _ = clip_fc_loss(target_tensor, current_tensor, num_augs)
+    loss = clip_fc_loss(target_tensor, current_tensor, num_augs)
     
     return jsonify({'loss': loss.item()})
 
