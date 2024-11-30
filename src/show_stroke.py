@@ -9,13 +9,15 @@ class StrokeVisualizer:
         self.param2img = param2img
         self.opt = opt
         
-        # Create figure and axis
-        self.fig, self.ax = plt.subplots(figsize=(10, 8))
-        plt.subplots_adjust(bottom=0.35)  # Make room for sliders
+        # Create figure and axis with more width for params
+        self.fig = plt.figure(figsize=(14, 8))  # Increased width from 10 to 14
+        
+        # Create main axis for the image with specific position and size
+        self.ax = self.fig.add_axes([0.1, 0.2, 0.6, 0.7])  # [left, bottom, width, height]
         
         # Initial parameter values
-        self.length = (opt.MIN_STROKE_LENGTH + opt.MAX_STROKE_LENGTH) / 2  # Start with middle value
-        self.bend = 0.0  # Start at middle (no bend)
+        self.length = (opt.MIN_STROKE_LENGTH + opt.MAX_STROKE_LENGTH) / 2
+        self.bend = 0.0
         self.depth = 0.9
         self.alpha = 0.0
         
@@ -23,11 +25,11 @@ class StrokeVisualizer:
         self.img_display = self.update_stroke()
         self.ax.set_title('Generated Stroke')
         
-        # Create sliders
-        length_ax = plt.axes([0.2, 0.2, 0.6, 0.03])
-        bend_ax = plt.axes([0.2, 0.15, 0.6, 0.03])
-        depth_ax = plt.axes([0.2, 0.1, 0.6, 0.03])
-        alpha_ax = plt.axes([0.2, 0.05, 0.6, 0.03])
+        # Create sliders with adjusted positions
+        length_ax = plt.axes([0.2, 0.2, 0.4, 0.03])  # Reduced width from 0.6 to 0.4
+        bend_ax = plt.axes([0.2, 0.15, 0.4, 0.03])
+        depth_ax = plt.axes([0.2, 0.1, 0.4, 0.03])
+        alpha_ax = plt.axes([0.2, 0.05, 0.4, 0.03])
         
         self.length_slider = Slider(
             length_ax, 'Length', 
@@ -58,15 +60,14 @@ class StrokeVisualizer:
         self.depth_slider.on_changed(self.update)
         self.alpha_slider.on_changed(self.update)
         
-        # Add reset button
-        reset_ax = plt.axes([0.8, 0.25, 0.1, 0.04])
+        # Add reset button with adjusted position
+        reset_ax = plt.axes([0.5, 0.25, 0.1, 0.04])
         self.reset_button = Button(reset_ax, 'Reset')
         self.reset_button.on_clicked(self.reset)
         
         # Add parameter display
-        self.param_text = self.ax.text(
-            1.05, 0.95, '', 
-            transform=self.ax.transAxes,
+        self.param_text = self.fig.text(
+            0.75, 0.8, '',  # Moved to right side of figure
             verticalalignment='top',
             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         )
