@@ -5,16 +5,17 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 
 class StrokeVisualizer:
-    def __init__(self, param2img):
+    def __init__(self, param2img, opt):
         self.param2img = param2img
+        self.opt = opt
         
         # Create figure and axis
         self.fig, self.ax = plt.subplots(figsize=(10, 8))
         plt.subplots_adjust(bottom=0.35)  # Make room for sliders
         
         # Initial parameter values
-        self.length = 0.02
-        self.bend = 0.005
+        self.length = (opt.MIN_STROKE_LENGTH + opt.MAX_STROKE_LENGTH) / 2  # Start with middle value
+        self.bend = 0.0  # Start at middle (no bend)
         self.depth = 0.9
         self.alpha = 0.0
         
@@ -29,12 +30,14 @@ class StrokeVisualizer:
         alpha_ax = plt.axes([0.2, 0.05, 0.6, 0.03])
         
         self.length_slider = Slider(
-            length_ax, 'Length', 0.01, 0.1, 
+            length_ax, 'Length', 
+            opt.MIN_STROKE_LENGTH, opt.MAX_STROKE_LENGTH,
             valinit=self.length,
             valstep=0.001
         )
         self.bend_slider = Slider(
-            bend_ax, 'Bend', -0.02, 0.02, 
+            bend_ax, 'Bend', 
+            -opt.MAX_BEND, opt.MAX_BEND,
             valinit=self.bend,
             valstep=0.001
         )
@@ -118,7 +121,7 @@ def main():
     param2img = get_param2img(opt)
 
     # Create and show the visualizer
-    visualizer = StrokeVisualizer(param2img)
+    visualizer = StrokeVisualizer(param2img, opt)
     plt.show()
 
 if __name__ == "__main__":
