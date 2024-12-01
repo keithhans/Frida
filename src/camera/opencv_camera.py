@@ -47,7 +47,7 @@ class WebCam():
         canvas = self.get_canvas()
         # Convert BGR to RGB and normalize to [0,1]
         canvas = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
-        canvas = torch.from_numpy(canvas).float() / 255.0
+        canvas = torch.from_numpy(canvas)
         canvas = canvas.permute(2, 0, 1).unsqueeze(0)
         if h is not None and w is not None:
             canvas = Resize((h, w), antialias=True)(canvas)
