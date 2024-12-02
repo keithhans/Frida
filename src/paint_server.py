@@ -8,6 +8,8 @@ from painting_optimization import load_objectives_data, optimize_painting
 from painting import Painting
 from brush_stroke import BrushStroke
 import random
+import datetime
+from my_tensorboard import TensorBoard
 
 app = Flask(__name__)
 device = torch.device('cuda')
@@ -45,6 +47,11 @@ def optimize_painting_endpoint():
     for key, value in data['options'].items():
         setattr(opt, key, value)
     print(vars(opt))
+
+    # Setup Tensorboard
+    date_and_time = datetime.datetime.now()
+    run_name = '' + date_and_time.strftime("%m_%d__%H_%M_%S")
+    opt.writer = TensorBoard('{}/{}'.format('tensorboard', run_name))
 
     # Get background image
     background_img = decode_tensor(data['background_img'])
