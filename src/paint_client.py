@@ -7,6 +7,7 @@ import numpy as np
 from camera.opencv_camera import WebCam
 import matplotlib.pyplot as plt
 import cv2
+from brush_stroke import BrushStroke
 
 def encode_tensor(tensor):
     buffer = io.BytesIO()
@@ -97,17 +98,33 @@ class PaintClient:
         painting = decode_tensor(response_data['painting'])
         color_palette = decode_tensor(response_data['color_palette']) if response_data['color_palette'] else None
         
-        return painting, color_palette
+        # Reconstruct brush strokes
+        brush_strokes = []
+        for stroke_data in response_data['brush_strokes']:
+            stroke = BrushStroke(self.opt)
+            stroke.xt = torch.tensor(stroke_data['xt'])
+            stroke.yt = torch.tensor(stroke_data['yt'])
+            stroke.length = torch.tensor(stroke_data['length'])
+            stroke.bend = torch.tensor(stroke_data['bend'])
+            stroke.z = torch.tensor(stroke_data['z'])
+            stroke.alpha = torch.tensor(stroke_data['alpha'])
+            if stroke_data['color'] is not None:
+                stroke.color_transform = torch.tensor(stroke_data['color'])
+            brush_strokes.append(stroke)
+        
+        return painting, color_palette, brush_strokes
 
 def main():
     client = PaintClient()
     
     # Example usage
-    painting, color_palette = client.optimize_painting(
+    painting, color_palette, brush_strokes = client.optimize_painting(
         n_strokes=100,
         optim_iter=100,
         ink=True
     )
+    
+    print(f"Received {len(brush_strokes)} brush strokes")
     
     # Visualize results
     plt.figure(figsize=(15, 5))
@@ -152,6 +169,17 @@ def main():
     if result.shape[-1] == 3:  # If channels last
         result = result[...,::-1]  # RGB to BGR for cv2
     cv2.imwrite('optimized_painting.png', result * 255)
+    
+    # You can now use brush_strokes with your robot
+    for i, stroke in enumerate(brush_strokes):
+        print(f"Stroke {i}:")
+        print(f"  Position: ({stroke.xt.item():.3f}, {stroke.yt.item():.3f})")
+        print(f"  Length: {stroke.length.item():.3f}")
+        print(f"  Bend: {stroke.bend.item():.3f}")
+        print(f"  Z: {stroke.z.item():.3f}")
+        print(f"  Alpha: {stroke.alpha.item():.3f}")
+        if hasattr(stroke, 'color_transform'):
+            print(f"  Color: {stroke.color_transform.tolist()}")
 
 if __name__ == "__main__":
     main() 

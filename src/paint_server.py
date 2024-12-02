@@ -80,10 +80,25 @@ def optimize_painting_endpoint():
     with torch.no_grad():
         rendered_painting = painting(opt.h_render, opt.w_render, use_alpha=False)
     
+    # Serialize brush strokes
+    brush_strokes_data = []
+    for stroke in painting.brush_strokes:
+        stroke_params = {
+            'xt': stroke.xt.item(),
+            'yt': stroke.yt.item(),
+            'length': stroke.length.item(),
+            'bend': stroke.bend.item(),
+            'z': stroke.z.item(),
+            'alpha': stroke.alpha.item(),
+            'color': stroke.color_transform.tolist() if hasattr(stroke, 'color_transform') else None
+        }
+        brush_strokes_data.append(stroke_params)
+    
     # Prepare response
     response = {
         'painting': encode_tensor(rendered_painting),
-        'color_palette': encode_tensor(color_palette) if color_palette is not None else None
+        'color_palette': encode_tensor(color_palette) if color_palette is not None else None,
+        'brush_strokes': brush_strokes_data
     }
     
     return jsonify(response)
