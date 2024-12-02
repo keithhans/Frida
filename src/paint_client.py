@@ -36,19 +36,22 @@ class PaintClient:
     def _filter_options(self, options_dict):
         filtered = {}
         for k, v in options_dict.items():
-            # Skip special attributes and None values
-            if k.startswith('__') or v is None:
+            # Skip special attributes
+            if k.startswith('__'):
                 continue
             
+            # Handle None values - include them
+            if v is None:
+                filtered[k] = None
             # Handle nested dictionaries
-            if isinstance(v, dict):
+            elif isinstance(v, dict):
                 filtered[k] = self._filter_options(v)
             # Handle basic types
             elif isinstance(v, (int, float, str, bool)):
                 filtered[k] = v
             # Handle lists/tuples of basic types
             elif isinstance(v, (list, tuple)):
-                if all(isinstance(x, (int, float, str, bool)) for x in v):
+                if all(isinstance(x, (int, float, str, bool, type(None))) for x in v):
                     filtered[k] = list(v)
             # Skip non-serializable objects (like ArgumentParser)
             elif not self._is_jsonable(v):
@@ -60,6 +63,8 @@ class PaintClient:
                         change_color=True, shuffle_strokes=True):
         # Get background image from camera
         background_img = self.cam.get_canvas_tensor() / 255.
+        # Save for visualization
+        self.last_background = background_img.clone()
         
         # Get all options including the nested 'opt' dictionary
         all_options = vars(self.opt)
@@ -67,16 +72,13 @@ class PaintClient:
         # Filter and prepare options for JSON serialization
         filtered_options = self._filter_options(all_options)
         
-        # Make sure critical options are included
-        if 'opt' in filtered_options:
-            filtered_options.update(filtered_options['opt'])
-        
         # Add render dimensions if not present
-        if 'h_render' not in filtered_options and 'render_height' in filtered_options:
-            filtered_options['h_render'] = filtered_options['render_height']
-        if 'w_render' not in filtered_options and 'render_height' in filtered_options:
-            filtered_options['w_render'] = filtered_options['render_height']
-        
+        if 'h_render' not in filtered_options['opt'] and 'render_height' in filtered_options['opt']:
+            filtered_options['opt']['h_render'] = filtered_options['opt']['render_height']
+        if 'w_render' not in filtered_options['opt'] and 'render_height' in filtered_options['opt']:
+            filtered_options['opt']['w_render'] = filtered_options['opt']['render_height']
+        print(filtered_options)
+
         data = {
             'options': filtered_options,
             'background_img': encode_tensor(background_img),
@@ -110,16 +112,23 @@ def main():
     # Visualize results
     plt.figure(figsize=(15, 5))
     
-    # Show original image from camera
+    # Show original image from camera (the one used in optimization)
     plt.subplot(1, 2, 1)
-    original = client.cam.get_canvas_tensor().numpy().transpose(1, 2, 0) / 255.
+    original = client.last_background.numpy()
+    # Remove batch dimension and transpose from (1, C, H, W) to (H, W, C)
+    original = original.squeeze(0).transpose(1, 2, 0)
     plt.imshow(original)
     plt.title('Original Image')
     plt.axis('off')
     
     # Show optimized painting
     plt.subplot(1, 2, 2)
-    result = painting.numpy().transpose(1, 2, 0)
+    result = painting.numpy()
+    # Handle batch dimension if present
+    if result.ndim == 4:
+        result = result.squeeze(0)
+    if result.shape[0] == 3:  # If channels first (C, H, W)
+        result = result.transpose(1, 2, 0)
     plt.imshow(result)
     plt.title('Optimized Painting')
     plt.axis('off')
@@ -140,7 +149,9 @@ def main():
     plt.show()
     
     # Optionally save the result
-    cv2.imwrite('optimized_painting.png', result[...,::-1] * 255)  # Convert RGB to BGR for cv2
+    if result.shape[-1] == 3:  # If channels last
+        result = result[...,::-1]  # RGB to BGR for cv2
+    cv2.imwrite('optimized_painting.png', result * 255)
 
 if __name__ == "__main__":
     main() 
