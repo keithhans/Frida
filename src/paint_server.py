@@ -4,7 +4,7 @@ import io
 import base64
 import numpy as np
 from options import Options
-from painting_optimization import optimize_painting
+from painting_optimization import load_objectives_data, optimize_painting
 from painting import Painting
 from brush_stroke import BrushStroke
 import random
@@ -44,10 +44,13 @@ def optimize_painting_endpoint():
     opt.gather_options()
     for key, value in data['options'].items():
         setattr(opt, key, value)
-    
+    print(vars(opt))
+
     # Get background image
     background_img = decode_tensor(data['background_img'])
     
+    load_objectives_data(opt)
+
     # Initialize painting
     painting = random_init_painting(
         opt, 
