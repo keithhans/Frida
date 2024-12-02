@@ -36,19 +36,22 @@ class PaintClient:
     def _filter_options(self, options_dict):
         filtered = {}
         for k, v in options_dict.items():
-            # Skip special attributes and None values
-            if k.startswith('__') or v is None:
+            # Skip special attributes
+            if k.startswith('__'):
                 continue
             
+            # Handle None values - include them
+            if v is None:
+                filtered[k] = None
             # Handle nested dictionaries
-            if isinstance(v, dict):
+            elif isinstance(v, dict):
                 filtered[k] = self._filter_options(v)
             # Handle basic types
             elif isinstance(v, (int, float, str, bool)):
                 filtered[k] = v
             # Handle lists/tuples of basic types
             elif isinstance(v, (list, tuple)):
-                if all(isinstance(x, (int, float, str, bool)) for x in v):
+                if all(isinstance(x, (int, float, str, bool, type(None))) for x in v):
                     filtered[k] = list(v)
             # Skip non-serializable objects (like ArgumentParser)
             elif not self._is_jsonable(v):
@@ -68,8 +71,8 @@ class PaintClient:
         filtered_options = self._filter_options(all_options)
         
         # Make sure critical options are included
-        if 'opt' in filtered_options:
-            filtered_options.update(filtered_options['opt'])
+        # if 'opt' in filtered_options:
+        #     filtered_options.update(filtered_options['opt'])
         
         # Add render dimensions if not present
         if 'h_render' not in filtered_options and 'render_height' in filtered_options:
