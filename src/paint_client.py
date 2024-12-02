@@ -63,16 +63,14 @@ class PaintClient:
                         change_color=True, shuffle_strokes=True):
         # Get background image from camera
         background_img = self.cam.get_canvas_tensor() / 255.
+        # Save for visualization
+        self.last_background = background_img.clone()
         
         # Get all options including the nested 'opt' dictionary
         all_options = vars(self.opt)
         
         # Filter and prepare options for JSON serialization
         filtered_options = self._filter_options(all_options)
-        
-        # Make sure critical options are included
-        # if 'opt' in filtered_options:
-        #     filtered_options.update(filtered_options['opt'])
         
         # Add render dimensions if not present
         if 'h_render' not in filtered_options['opt'] and 'render_height' in filtered_options['opt']:
@@ -114,12 +112,11 @@ def main():
     # Visualize results
     plt.figure(figsize=(15, 5))
     
-    # Show original image from camera
+    # Show original image from camera (the one used in optimization)
     plt.subplot(1, 2, 1)
-    original = client.cam.get_canvas_tensor().numpy()
+    original = client.last_background.numpy()
     # Remove batch dimension and transpose from (1, C, H, W) to (H, W, C)
     original = original.squeeze(0).transpose(1, 2, 0)
-    original = original / 255.
     plt.imshow(original)
     plt.title('Original Image')
     plt.axis('off')
