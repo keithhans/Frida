@@ -101,15 +101,19 @@ class PaintClient:
         # Reconstruct brush strokes
         brush_strokes = []
         for stroke_data in response_data['brush_strokes']:
-            stroke = BrushStroke(self.opt)
-            stroke.xt = torch.tensor(stroke_data['xt'])
-            stroke.yt = torch.tensor(stroke_data['yt'])
-            stroke.length = torch.tensor(stroke_data['length'])
-            stroke.bend = torch.tensor(stroke_data['bend'])
-            stroke.z = torch.tensor(stroke_data['z'])
-            stroke.alpha = torch.tensor(stroke_data['alpha'])
-            if stroke_data['color'] is not None:
-                stroke.color_transform = torch.tensor(stroke_data['color'])
+            # Create brush stroke with all parameters
+            stroke = BrushStroke(
+                self.opt,
+                stroke_length=torch.tensor(stroke_data['length']),
+                stroke_z=torch.tensor(stroke_data['z']),
+                stroke_bend=torch.tensor(stroke_data['bend']),
+                stroke_alpha=torch.tensor(stroke_data['alpha']),
+                a=torch.tensor(stroke_data['a']),
+                xt=torch.tensor(stroke_data['xt']),
+                yt=torch.tensor(stroke_data['yt']),
+                color=torch.tensor(stroke_data['color']) if stroke_data['color'] is not None else None,
+                ink=stroke_data['ink']
+            )
             brush_strokes.append(stroke)
         
         return painting, color_palette, brush_strokes
@@ -173,13 +177,15 @@ def main():
     # You can now use brush_strokes with your robot
     for i, stroke in enumerate(brush_strokes):
         print(f"Stroke {i}:")
-        print(f"  Position: ({stroke.xt.item():.3f}, {stroke.yt.item():.3f})")
-        print(f"  Length: {stroke.length.item():.3f}")
-        print(f"  Bend: {stroke.bend.item():.3f}")
-        print(f"  Z: {stroke.z.item():.3f}")
-        print(f"  Alpha: {stroke.alpha.item():.3f}")
+        print(f"  Position: ({stroke.transformation.xt.item():.3f}, {stroke.transformation.yt.item():.3f})")
+        print(f"  Rotation: {stroke.transformation.a.item():.3f}")
+        print(f"  Length: {stroke.stroke_length.item():.3f}")
+        print(f"  Bend: {stroke.stroke_bend.item():.3f}")
+        print(f"  Z: {stroke.stroke_z.item():.3f}")
+        print(f"  Alpha: {stroke.stroke_alpha.item():.3f}")
         if hasattr(stroke, 'color_transform'):
             print(f"  Color: {stroke.color_transform.tolist()}")
+        print(f"  Type: {'Ink' if not hasattr(stroke, 'color_transform') else 'Color'}")
 
 if __name__ == "__main__":
     main() 

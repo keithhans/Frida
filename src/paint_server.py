@@ -84,13 +84,15 @@ def optimize_painting_endpoint():
     brush_strokes_data = []
     for stroke in painting.brush_strokes:
         stroke_params = {
-            'xt': stroke.xt.item(),
-            'yt': stroke.yt.item(),
-            'length': stroke.length.item(),
-            'bend': stroke.bend.item(),
-            'z': stroke.z.item(),
-            'alpha': stroke.alpha.item(),
-            'color': stroke.color_transform.tolist() if hasattr(stroke, 'color_transform') else None
+            'xt': stroke.transformation.xt.item(),
+            'yt': stroke.transformation.yt.item(),
+            'a': stroke.transformation.a.item(),  # rotation angle
+            'length': stroke.stroke_length.item(),
+            'bend': stroke.stroke_bend.item(),
+            'z': stroke.stroke_z.item(),
+            'alpha': stroke.stroke_alpha.item(),
+            'color': stroke.color_transform.tolist() if hasattr(stroke, 'color_transform') else None,
+            'ink': not hasattr(stroke, 'color_transform')  # if no color_transform, it's an ink stroke
         }
         brush_strokes_data.append(stroke_params)
     
