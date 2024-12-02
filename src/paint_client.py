@@ -5,6 +5,8 @@ import base64
 from options import Options
 import numpy as np
 from camera.opencv_camera import WebCam
+import matplotlib.pyplot as plt
+import cv2
 
 def encode_tensor(tensor):
     buffer = io.BytesIO()
@@ -60,8 +62,40 @@ def main():
         ink=True
     )
     
-    # Save or display results
-    # ... (add your visualization code here)
+    # Visualize results
+    plt.figure(figsize=(15, 5))
+    
+    # Show original image from camera
+    plt.subplot(1, 2, 1)
+    original = client.cam.get_canvas_tensor().numpy().transpose(1, 2, 0) / 255.
+    plt.imshow(original)
+    plt.title('Original Image')
+    plt.axis('off')
+    
+    # Show optimized painting
+    plt.subplot(1, 2, 2)
+    result = painting.numpy().transpose(1, 2, 0)
+    plt.imshow(result)
+    plt.title('Optimized Painting')
+    plt.axis('off')
+    
+    # If we have a color palette, display it below
+    if color_palette is not None:
+        colors = color_palette.numpy()
+        n_colors = len(colors)
+        
+        # Create a small subplot for the color palette
+        plt.figure(figsize=(8, 1))
+        for i, color in enumerate(colors):
+            plt.subplot(1, n_colors, i+1)
+            plt.imshow([[color]])
+            plt.axis('off')
+        plt.suptitle('Color Palette')
+    
+    plt.show()
+    
+    # Optionally save the result
+    cv2.imwrite('optimized_painting.png', result[...,::-1] * 255)  # Convert RGB to BGR for cv2
 
 if __name__ == "__main__":
     main() 

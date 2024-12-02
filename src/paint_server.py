@@ -66,9 +66,13 @@ def optimize_painting_endpoint():
         shuffle_strokes=data.get('shuffle_strokes', True)
     )
     
+    # Get the rendered painting using forward pass
+    with torch.no_grad():
+        rendered_painting = painting(opt.h_render, opt.w_render, use_alpha=False)
+    
     # Prepare response
     response = {
-        'painting': encode_tensor(painting.get_painting()),
+        'painting': encode_tensor(rendered_painting),
         'color_palette': encode_tensor(color_palette) if color_palette is not None else None
     }
     
