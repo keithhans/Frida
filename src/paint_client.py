@@ -25,15 +25,60 @@ class PaintClient:
         self.opt.gather_options()
         self.cam = WebCam()
 
+    def _is_jsonable(self, x):
+        try:
+            import json
+            json.dumps(x)
+            return True
+        except (TypeError, OverflowError):
+            return False
+
+    def _filter_options(self, options_dict):
+        filtered = {}
+        for k, v in options_dict.items():
+            # Skip special attributes and None values
+            if k.startswith('__') or v is None:
+                continue
+            
+            # Handle nested dictionaries
+            if isinstance(v, dict):
+                filtered[k] = self._filter_options(v)
+            # Handle basic types
+            elif isinstance(v, (int, float, str, bool)):
+                filtered[k] = v
+            # Handle lists/tuples of basic types
+            elif isinstance(v, (list, tuple)):
+                if all(isinstance(x, (int, float, str, bool)) for x in v):
+                    filtered[k] = list(v)
+            # Skip non-serializable objects (like ArgumentParser)
+            elif not self._is_jsonable(v):
+                continue
+            
+        return filtered
+
     def optimize_painting(self, n_strokes=100, optim_iter=100, ink=False, 
                         change_color=True, shuffle_strokes=True):
         # Get background image from camera
         background_img = self.cam.get_canvas_tensor() / 255.
         
-        # Prepare data for server
+        # Get all options including the nested 'opt' dictionary
+        all_options = vars(self.opt)
+        
+        # Filter and prepare options for JSON serialization
+        filtered_options = self._filter_options(all_options)
+        
+        # Make sure critical options are included
+        if 'opt' in filtered_options:
+            filtered_options.update(filtered_options['opt'])
+        
+        # Add render dimensions if not present
+        if 'h_render' not in filtered_options and 'render_height' in filtered_options:
+            filtered_options['h_render'] = filtered_options['render_height']
+        if 'w_render' not in filtered_options and 'render_height' in filtered_options:
+            filtered_options['w_render'] = filtered_options['render_height']
+        
         data = {
-            'options': {k: v for k, v in vars(self.opt).items() 
-                       if not k.startswith('__') and isinstance(v, (int, float, str, bool))},
+            'options': filtered_options,
             'background_img': encode_tensor(background_img),
             'n_strokes': n_strokes,
             'optim_iter': optim_iter,
