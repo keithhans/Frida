@@ -78,7 +78,7 @@ class CoDrawClient:
         # Show options to user
         fig, ax = plt.subplots(1, n_options, figsize=(2*n_options, 2))
         for j in range(n_options):
-            ax[j].imshow(target_imgs[j].permute(1, 2, 0).numpy())
+            ax[j].imshow(target_imgs[j].numpy())
             ax[j].set_xticks([])
             ax[j].set_yticks([])
             ax[j].set_title(str(j))
