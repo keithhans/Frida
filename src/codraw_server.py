@@ -12,6 +12,8 @@ from cofrida import get_instruct_pix2pix_model
 import random
 from PIL import Image
 from paint_utils3 import initialize_painting
+from torchvision.transforms import Resize
+
 app = Flask(__name__)
 device = torch.device('cuda')
 
@@ -77,7 +79,10 @@ def optimize_painting_plan_endpoint():
     
     # Get images
     current_canvas = decode_tensor(data['current_canvas']).permute(2, 0, 1).unsqueeze(0)/255.
+    current_canvas = Resize((opt.h_render, opt.w_render), antialias=True)(current_canvas)
     target_img = decode_tensor(data['target_img']).permute(2, 0, 1).unsqueeze(0)/255.
+    target_img = Resize((opt.h_render, opt.w_render), antialias=True)(target_img)
+
     print(f"current_canvas type: {type(current_canvas)}")
     print(f"current_canvas shape: {current_canvas.shape}")
     print(f"target_img type: {type(target_img)}")
