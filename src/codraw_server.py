@@ -47,11 +47,11 @@ def get_cofrida_image_endpoint():
     with torch.no_grad():
         for i in range(data.get('n_options', 6)):
             image = cofrida_model(
-                current_canvas_pil,  # PIL Image input
                 data['prompt'],
+                current_canvas_pil,  # PIL Image input
                 num_inference_steps=20,
-                image_guidance_scale=1.5 if i == 0 else random.uniform(1.01, 2.5),
-                guidance_scale=7
+                num_images_per_prompt=1,
+                image_guidance_scale=1.5 if i == 0 else random.uniform(1.01, 2.5)
             ).images[0]  # Returns PIL Image
             target_imgs.append(torch.from_numpy(np.array(image)).cpu())  # Convert PIL Image to tensor
     
