@@ -13,16 +13,13 @@ from instruct_pix2pix import get_instruct_pix2pix_model
 app = Flask(__name__)
 device = torch.device('cuda')
 
-# Load COFRIDA model once at startup
-cofrida_model = None
-
-def init_cofrida_model(opt):
-    global cofrida_model
-    if cofrida_model is None:
-        cofrida_model = get_instruct_pix2pix_model(
-            lora_weights_path=opt.cofrida_model, 
-            device=device)
-        cofrida_model.set_progress_bar_config(disable=True)
+# Initialize COFRIDA model at startup
+print("Loading COFRIDA model...")
+cofrida_model = get_instruct_pix2pix_model(
+    lora_weights_path="skeeterman/CoFRIDA-Sharpie", 
+    device=device)
+cofrida_model.set_progress_bar_config(disable=True)
+print("COFRIDA model loaded successfully")
 
 def decode_tensor(encoded_data):
     decoded = base64.b64decode(encoded_data)
@@ -39,14 +36,6 @@ def encode_tensor(tensor):
 def get_cofrida_image_endpoint():
     data = request.json
     
-    # Reconstruct options and initialize model
-    opt = Options()
-    opt.gather_options()
-    for key, value in data['options'].items():
-        setattr(opt, key, value)
-    
-    init_cofrida_model(opt)
-    
     # Get current canvas
     current_canvas = decode_tensor(data['current_canvas'])
     
@@ -59,7 +48,8 @@ def get_cofrida_image_endpoint():
             image_guidance_scale=1.5,
             guidance_scale=7
         ).images[0]
-        target_img = torch.from_numpy(target_img).to(device)
+        # Convert numpy array to tensor and move to CPU
+        target_img = torch.from_numpy(target_img).cpu()
     
     return jsonify({
         'target_img': encode_tensor(target_img)

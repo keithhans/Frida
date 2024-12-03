@@ -53,7 +53,6 @@ class CoDrawClient:
 
     def get_cofrida_image(self, current_canvas, prompt):
         data = {
-            'options': self._filter_options(vars(self.opt)),
             'current_canvas': encode_tensor(current_canvas),
             'prompt': prompt
         }
