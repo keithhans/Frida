@@ -56,9 +56,38 @@ class CoDrawClient:
                 n_colors=self.opt.n_colors)
     
     def _filter_options(self, options_dict):
-        # Same as PaintClient._filter_options
-        # ... (copy the method from PaintClient)
-        pass
+        filtered = {}
+        for k, v in options_dict.items():
+            # Skip special attributes
+            if k.startswith('__'):
+                continue
+            
+            # Handle None values - include them
+            if v is None:
+                filtered[k] = None
+            # Handle nested dictionaries
+            elif isinstance(v, dict):
+                filtered[k] = self._filter_options(v)
+            # Handle basic types
+            elif isinstance(v, (int, float, str, bool)):
+                filtered[k] = v
+            # Handle lists/tuples of basic types
+            elif isinstance(v, (list, tuple)):
+                if all(isinstance(x, (int, float, str, bool, type(None))) for x in v):
+                    filtered[k] = list(v)
+            # Skip non-serializable objects (like ArgumentParser)
+            elif not self._is_jsonable(v):
+                continue
+            
+        return filtered
+
+    def _is_jsonable(self, x):
+        try:
+            import json
+            json.dumps(x)
+            return True
+        except (TypeError, OverflowError):
+            return False
 
     def get_cofrida_image(self, current_canvas, prompt, n_options=6):
         """Get COFRIDA image with user selection from multiple options"""
