@@ -11,7 +11,7 @@ from my_tensorboard import TensorBoard
 from cofrida import get_instruct_pix2pix_model
 import random
 from PIL import Image
-
+from paint_utils3 import initialize_painting
 app = Flask(__name__)
 device = torch.device('cuda')
 
@@ -68,6 +68,7 @@ def optimize_painting_plan_endpoint():
     opt.gather_options()
     for key, value in data['options'].items():
         setattr(opt, key, value)
+    print(vars(opt))
 
     # Setup Tensorboard
     date_and_time = datetime.datetime.now()
