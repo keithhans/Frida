@@ -98,8 +98,7 @@ class Painter():
 
 
         # Set how high the table is wrt the brush
-        #if use_cache and os.path.exists(os.path.join(self.opt.cache_dir, "brush_tip_to_table_calib.json")):
-        if True:    # override for now
+        if use_cache and os.path.exists(os.path.join(self.opt.cache_dir, "brush_tip_to_table_calib.json")):
             params = json.load(open(os.path.join(self.opt.cache_dir, "brush_tip_to_table_calib.json"),'rb'))
             self.Z_CANVAS = params['Z_CANVAS']
             self.Z_MAX_CANVAS = params['Z_MAX_CANVAS']
@@ -187,8 +186,6 @@ class Painter():
             self.opt.MAX_ALPHA = settings['MAX_ALPHA']
             self.opt.STROKE_LIBRARY_CANVAS_WIDTH_M = settings['CANVAS_WIDTH_M']
             self.opt.STROKE_LIBRARY_CANVAS_HEIGHT_M = settings['CANVAS_HEIGHT_M']
-
-        return  # bypass for now
 
         # if not os.path.exists(os.path.join(self.opt.cache_dir, 'param2img.pt')) or not use_cache:
         #     if not self.opt.dont_retrain_stroke_model:
