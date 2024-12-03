@@ -8,7 +8,7 @@ from painting_optimization import load_objectives_data, optimize_painting
 from painting import Painting
 import datetime
 from my_tensorboard import TensorBoard
-from instruct_pix2pix import get_instruct_pix2pix_model
+from cofrida import get_instruct_pix2pix_model
 import random
 from PIL import Image
 
