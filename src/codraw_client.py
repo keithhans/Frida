@@ -13,6 +13,7 @@ import numpy as np
 from paint_utils3 import nearest_color, canvas_to_global_coordinates
 import matplotlib.pyplot as plt
 from PIL import Image
+from my_tensorboard import TensorBoard
 
 def encode_tensor(tensor):
     buffer = io.BytesIO()
@@ -29,9 +30,15 @@ class CoDrawClient:
         self.server_url = server_url
         self.opt = Options()
         self.opt.gather_options()
+        
+        date_and_time = datetime.datetime.now()
+        run_name = '' + date_and_time.strftime("%m_%d__%H_%M_%S")
+        self.opt.writer = TensorBoard('{}/{}'.format(self.opt.tensorboard_dir, run_name))
+        self.opt.writer.add_text('args', str(sys.argv), 0)
+
         self.painter = Painter(self.opt)
         self.opt = self.painter.opt
-        
+
         # Set render dimensions
         self.w_render = int(self.opt.render_height * (self.opt.CANVAS_WIDTH_M/self.opt.CANVAS_HEIGHT_M))
         self.h_render = int(self.opt.render_height)
