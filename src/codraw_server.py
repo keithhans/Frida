@@ -76,9 +76,16 @@ def optimize_painting_plan_endpoint():
     opt.writer = TensorBoard('{}/{}'.format(opt.tensorboard_dir, run_name))
     
     # Get images
-    current_canvas = decode_tensor(data['current_canvas'])
-    target_img = decode_tensor(data['target_img'])
-    
+    current_canvas = decode_tensor(data['current_canvas']).permute(2, 0, 1).unsqueeze(0)/255.
+    target_img = decode_tensor(data['target_img']).permute(2, 0, 1).unsqueeze(0)/255.
+    print(f"current_canvas type: {type(current_canvas)}")
+    print(f"current_canvas shape: {current_canvas.shape}")
+    print(f"target_img type: {type(target_img)}")
+    print(f"target_img shape: {target_img.shape}")
+    print(f"Sample current_canvas value: {current_canvas[0,0,0,0].item()}")  # First element
+    print(f"Sample target_img value: {target_img[0,0,0,0].item()}")  # First element
+
+
     # Set objectives
     opt.objective = ['clip_conv_loss']
     opt.objective_data_loaded = [target_img]
