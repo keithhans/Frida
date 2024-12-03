@@ -9,6 +9,7 @@ from painting import Painting
 import datetime
 from my_tensorboard import TensorBoard
 from instruct_pix2pix import get_instruct_pix2pix_model
+import random
 
 app = Flask(__name__)
 device = torch.device('cuda')
@@ -36,23 +37,25 @@ def encode_tensor(tensor):
 def get_cofrida_image_endpoint():
     data = request.json
     
-    # Get current canvas
+    # Get current canvas and number of options to generate
     current_canvas = decode_tensor(data['current_canvas'])
+    n_options = data.get('n_options', 6)  # Default to 6 options
     
-    # Generate COFRIDA image
+    # Generate multiple COFRIDA images
+    target_imgs = []
     with torch.no_grad():
-        target_img = cofrida_model(
-            current_canvas,
-            data['prompt'],
-            num_inference_steps=20,
-            image_guidance_scale=1.5,
-            guidance_scale=7
-        ).images[0]
-        # Convert numpy array to tensor and move to CPU
-        target_img = torch.from_numpy(target_img).cpu()
+        for i in range(n_options):
+            image = cofrida_model(
+                current_canvas,
+                data['prompt'],
+                num_inference_steps=20,
+                image_guidance_scale=1.5 if i == 0 else random.uniform(1.01, 2.5),
+                guidance_scale=7
+            ).images[0]
+            target_imgs.append(torch.from_numpy(image).cpu())
     
     return jsonify({
-        'target_img': encode_tensor(target_img)
+        'target_imgs': [encode_tensor(img) for img in target_imgs]
     })
 
 @app.route('/optimize_painting_plan', methods=['POST'])

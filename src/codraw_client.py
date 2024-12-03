@@ -11,6 +11,7 @@ from tqdm import tqdm
 import cv2
 import numpy as np
 from paint_utils3 import nearest_color, canvas_to_global_coordinates
+import matplotlib.pyplot as plt
 
 def encode_tensor(tensor):
     buffer = io.BytesIO()
@@ -51,16 +52,45 @@ class CoDrawClient:
         # ... (copy the method from PaintClient)
         pass
 
-    def get_cofrida_image(self, current_canvas, prompt):
+    def get_cofrida_image(self, current_canvas, prompt, n_options=6):
+        """Get COFRIDA image with user selection from multiple options"""
         data = {
             'current_canvas': encode_tensor(current_canvas),
-            'prompt': prompt
+            'prompt': prompt,
+            'n_options': n_options
         }
         
+        # Get multiple options from server
         response = requests.post(f'{self.server_url}/get_cofrida_image', json=data)
         response_data = response.json()
         
-        return decode_tensor(response_data['target_img'])
+        # Decode all images
+        target_imgs = [decode_tensor(img_data) for img_data in response_data['target_imgs']]
+        
+        # Show options to user
+        fig, ax = plt.subplots(1, n_options, figsize=(2*n_options, 2))
+        for j in range(n_options):
+            ax[j].imshow(target_imgs[j].permute(1, 2, 0).numpy())
+            ax[j].set_xticks([])
+            ax[j].set_yticks([])
+            ax[j].set_title(str(j))
+        plt.show()
+        
+        # Get user selection
+        while True:
+            try:
+                target_img_ind = int(input("Type the number of the option you liked most? Type -1 if you don't like any and want more options.\n:"))
+                if target_img_ind >= -1 and target_img_ind < n_options:
+                    break
+                print(f"Please enter a number between -1 and {n_options-1}")
+            except ValueError:
+                print("Please enter a valid number")
+        
+        # If user wants new options, recursively call this function
+        if target_img_ind < 0:
+            return self.get_cofrida_image(current_canvas, prompt, n_options)
+        
+        return target_imgs[target_img_ind]
 
     def optimize_painting_plan(self, current_canvas, target_img, num_strokes, turn_number):
         data = {
@@ -107,7 +137,7 @@ class CoDrawClient:
             if prompt.lower() == 'done':
                 break
             
-            # Get COFRIDA image
+            # Get COFRIDA image with user selection
             target_img = self.get_cofrida_image(current_canvas, prompt)
             
             # Get number of strokes
