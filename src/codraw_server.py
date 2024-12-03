@@ -10,6 +10,7 @@ import datetime
 from my_tensorboard import TensorBoard
 from instruct_pix2pix import get_instruct_pix2pix_model
 import random
+from PIL import Image
 
 app = Flask(__name__)
 device = torch.device('cuda')
@@ -37,22 +38,22 @@ def encode_tensor(tensor):
 def get_cofrida_image_endpoint():
     data = request.json
     
-    # Get current canvas and number of options to generate
+    # Get current canvas and convert to PIL
     current_canvas = decode_tensor(data['current_canvas'])
-    n_options = data.get('n_options', 6)  # Default to 6 options
+    current_canvas_pil = Image.fromarray(current_canvas.cpu().numpy().astype(np.uint8))
     
     # Generate multiple COFRIDA images
     target_imgs = []
     with torch.no_grad():
-        for i in range(n_options):
+        for i in range(data.get('n_options', 6)):
             image = cofrida_model(
-                current_canvas,
+                current_canvas_pil,  # PIL Image input
                 data['prompt'],
                 num_inference_steps=20,
                 image_guidance_scale=1.5 if i == 0 else random.uniform(1.01, 2.5),
                 guidance_scale=7
-            ).images[0]
-            target_imgs.append(torch.from_numpy(image).cpu())
+            ).images[0]  # Returns PIL Image
+            target_imgs.append(torch.from_numpy(np.array(image)).cpu())  # Convert PIL Image to tensor
     
     return jsonify({
         'target_imgs': [encode_tensor(img) for img in target_imgs]

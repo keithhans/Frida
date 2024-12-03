@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 from paint_utils3 import nearest_color, canvas_to_global_coordinates
 import matplotlib.pyplot as plt
+from PIL import Image
 
 def encode_tensor(tensor):
     buffer = io.BytesIO()
@@ -129,9 +130,43 @@ class CoDrawClient:
         self.painter.to_neutral()
         
         for i in range(9):  # Max number of turns
-            # Get current canvas
-            current_canvas = self.painter.camera.get_canvas_tensor() / 255.
+            ##################################
+            ########## Human Turn ###########
+            ##################################
             
+            # Get current canvas state
+            current_canvas = self.painter.camera.get_canvas_tensor() / 255.
+            current_canvas = torch.nn.functional.interpolate(
+                current_canvas, 
+                size=(self.h_render, self.w_render), 
+                mode='bilinear',
+                align_corners=False
+            )
+            
+            # Let human draw
+            try:
+                input('\nFeel free to draw, then press enter when done.')
+            except SyntaxError:
+                pass
+
+            # Get updated canvas after human drawing
+            current_canvas = self.painter.camera.get_canvas_tensor() / 255.
+            current_canvas = torch.nn.functional.interpolate(
+                current_canvas, 
+                size=(self.h_render, self.w_render), 
+                mode='bilinear',
+                align_corners=False
+            )
+
+            #################################
+            ########## Robot Turn ###########
+            #################################
+            
+            # Get current canvas for COFRIDA
+            curr_canvas = self.painter.camera.get_canvas()
+            curr_canvas_pil = Image.fromarray(curr_canvas.astype(np.uint8)).resize((512, 512))
+            current_canvas = torch.from_numpy(np.array(curr_canvas_pil))
+
             # Get user input for prompt
             prompt = input("\nWhat would you like me to draw? Type 'done' if finished.\n:")
             if prompt.lower() == 'done':
@@ -154,6 +189,7 @@ class CoDrawClient:
                             + "Ensure mixed paint is provided and then exit this to "
                             + "start painting.")
             
+            # Execute each stroke in the plan
             for stroke_ind in tqdm(range(len(brush_strokes)), desc="Executing plan"):
                 stroke = brush_strokes[stroke_ind]
                 
@@ -175,9 +211,19 @@ class CoDrawClient:
                 # Execute stroke
                 x, y = stroke.transformation.xt.item()*0.5+0.5, stroke.transformation.yt.item()*0.5+0.5
                 y = 1-y
-                x, y = min(max(x,0.),1.), min(max(y,0.),1.)
+                x, y = min(max(x,0.),1.), min(max(y,0.),1.)  # safety
                 x_glob, y_glob,_ = canvas_to_global_coordinates(x,y,None,self.painter.opt)
                 stroke.execute(self.painter, x_glob, y_glob, stroke.transformation.a.item())
+            
+            self.painter.to_neutral()
+        
+        # Clean up at the end
+        if not self.painter.opt.ink:
+            self.painter.clean_paint_brush()
+            self.painter.clean_paint_brush()
+        
+        self.painter.to_neutral()
+        self.painter.robot.good_night_robot()
 
 def main():
     client = CoDrawClient()
