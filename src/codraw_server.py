@@ -13,7 +13,7 @@ import random
 from PIL import Image
 from paint_utils3 import initialize_painting
 from torchvision.transforms import Resize
-
+from paint_utils3 import format_img
 app = Flask(__name__)
 device = torch.device('cuda')
 
@@ -90,6 +90,8 @@ def optimize_painting_plan_endpoint():
     print(f"Sample current_canvas value: {current_canvas[0,0,0,0].item()}")  # First element
     print(f"Sample target_img value: {target_img[0,0,0,0].item()}")  # First element
 
+    processed_target_img = format_img(target_img)
+    opt.writer.add_image('images/target_img', processed_target_img, 0)
 
     # Set objectives
     opt.objective = ['clip_conv_loss']
