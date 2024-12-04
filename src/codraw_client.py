@@ -10,7 +10,7 @@ import base64
 from tqdm import tqdm
 import cv2
 import numpy as np
-from paint_utils3 import nearest_color, canvas_to_global_coordinates
+from paint_utils3 import nearest_color, canvas_to_global_coordinates, show_img
 import matplotlib.pyplot as plt
 from PIL import Image
 from my_tensorboard import TensorBoard
