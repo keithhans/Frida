@@ -114,9 +114,38 @@ def optimize_painting_plan_endpoint():
                 optim_iter=opt.optim_iter, color_palette=None,
                 log_title=f"{data['turn_number']}_3_plan")
     
-    # Serialize brush strokes
+    # Get all strokes and their positions
+    strokes = painting.brush_strokes
+    positions = [(stroke.transformation.xt.item(), stroke.transformation.yt.item()) 
+                for stroke in strokes]
+    
+    # Sort strokes by proximity
+    sorted_indices = []
+    remaining_indices = list(range(len(strokes)))
+    
+    # Start with the leftmost stroke
+    current_idx = min(remaining_indices, 
+                     key=lambda i: positions[i][0])
+    sorted_indices.append(current_idx)
+    remaining_indices.remove(current_idx)
+    
+    # Add closest strokes one by one
+    while remaining_indices:
+        current_pos = positions[current_idx]
+        # Find closest remaining stroke
+        next_idx = min(remaining_indices,
+                      key=lambda i: ((positions[i][0] - current_pos[0])**2 + 
+                                   (positions[i][1] - current_pos[1])**2))
+        sorted_indices.append(next_idx)
+        remaining_indices.remove(next_idx)
+        current_idx = next_idx
+    
+    # Reorder strokes
+    sorted_strokes = [strokes[i] for i in sorted_indices]
+    
+    # Serialize brush strokes in sorted order
     brush_strokes_data = []
-    for stroke in painting.brush_strokes:
+    for stroke in sorted_strokes:
         stroke_params = {
             'xt': stroke.transformation.xt.item(),
             'yt': stroke.transformation.yt.item(),
