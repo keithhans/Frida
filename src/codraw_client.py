@@ -200,6 +200,7 @@ class CoDrawClient:
             
             # Get current canvas for COFRIDA
             curr_canvas = self.painter.camera.get_canvas()
+            curr_canvas = cv2.cvtColor(curr_canvas, cv2.COLOR_BGR2RGB)
             curr_canvas_pil = Image.fromarray(curr_canvas.astype(np.uint8)).resize((512, 512))
             current_canvas = torch.from_numpy(np.array(curr_canvas_pil))
 
