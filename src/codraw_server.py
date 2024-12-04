@@ -40,9 +40,15 @@ def encode_tensor(tensor):
 def get_cofrida_image_endpoint():
     data = request.json
     
+    # Setup Tensorboard
+    date_and_time = datetime.datetime.now()
+    run_name = '' + date_and_time.strftime("%m_%d__%H_%M_%S")
+    writer = TensorBoard('./painting_log/' + run_name)
+
     # Get current canvas and convert to PIL
     current_canvas = decode_tensor(data['current_canvas'])
     current_canvas_pil = Image.fromarray(current_canvas.cpu().numpy().astype(np.uint8))
+    writer.add_image('images/current_canvas', format_img(current_canvas), 0)
     
     # Generate multiple COFRIDA images
     target_imgs = []
@@ -55,7 +61,9 @@ def get_cofrida_image_endpoint():
                 num_images_per_prompt=1,
                 image_guidance_scale=1.5 if i == 0 else random.uniform(1.01, 2.5)
             ).images[0]  # Returns PIL Image
-            target_imgs.append(torch.from_numpy(np.array(image)).cpu())  # Convert PIL Image to tensor
+            target_img = torch.from_numpy(np.array(image)).cpu()    
+            target_imgs.append(target_img)
+            writer.add_image('images/target_img', format_img(target_img), i)
     
     return jsonify({
         'target_imgs': [encode_tensor(img) for img in target_imgs]
