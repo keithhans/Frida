@@ -8,6 +8,9 @@ from camera.opencv_camera import WebCam
 import matplotlib.pyplot as plt
 import cv2
 from brush_stroke import BrushStroke
+from painter import Painter
+from tqdm import tqdm
+from utils import show_img, nearest_color, canvas_to_global_coordinates, get_colors
 
 def encode_tensor(tensor):
     buffer = io.BytesIO()
@@ -24,7 +27,24 @@ class PaintClient:
         self.server_url = server_url
         self.opt = Options()
         self.opt.gather_options()
-        self.cam = WebCam()
+        self.painter = Painter(self.opt)  # Initialize robot painter
+        self.opt = self.painter.opt  # Update options from painter
+        
+        # Set render dimensions
+        self.w_render = int(self.opt.render_height * (self.opt.CANVAS_WIDTH_M/self.opt.CANVAS_HEIGHT_M))
+        self.h_render = int(self.opt.render_height)
+        self.opt.w_render, self.opt.h_render = self.w_render, self.h_render
+        
+        # Initialize painting state
+        self.consecutive_paints = 0
+        self.consecutive_strokes_no_clean = 0
+        self.curr_color = -1
+        
+        self.color_palette = None
+        if self.opt.use_colors_from is not None:
+            self.color_palette = get_colors(
+                cv2.resize(cv2.imread(self.opt.use_colors_from)[:,:,::-1], (256, 256)), 
+                n_colors=self.opt.n_colors)
 
     def _is_jsonable(self, x):
         try:
@@ -63,7 +83,7 @@ class PaintClient:
     def optimize_painting(self, n_strokes=100, optim_iter=100, ink=False, 
                         change_color=True, shuffle_strokes=True):
         # Get background image from camera
-        background_img = self.cam.get_canvas_tensor() / 255.
+        background_img = self.painter.camera.get_canvas_tensor() / 255.
         # Save for visualization
         self.last_background = background_img.clone()
         
@@ -78,7 +98,6 @@ class PaintClient:
             filtered_options['opt']['h_render'] = filtered_options['opt']['render_height']
         if 'w_render' not in filtered_options['opt'] and 'render_height' in filtered_options['opt']:
             filtered_options['opt']['w_render'] = filtered_options['opt']['render_height']
-        print(filtered_options)
 
         data = {
             'options': filtered_options,
@@ -101,7 +120,6 @@ class PaintClient:
         # Reconstruct brush strokes
         brush_strokes = []
         for stroke_data in response_data['brush_strokes']:
-            # Create brush stroke with all parameters
             stroke = BrushStroke(
                 self.opt,
                 stroke_length=torch.tensor(stroke_data['length']),
@@ -116,76 +134,61 @@ class PaintClient:
             )
             brush_strokes.append(stroke)
         
+        # Execute the plan
+        if not self.painter.opt.simulate:
+            show_img(self.painter.camera.get_canvas()/255., 
+                    title="Initial plan complete. Ready to start painting."
+                        + "Ensure mixed paint is provided and then exit this to "
+                        + "start painting.")
+        
+        # Execute each stroke in the plan
+        for stroke_ind in tqdm(range(len(brush_strokes)), desc="Executing plan"):
+            stroke = brush_strokes[stroke_ind]
+            
+            # Handle paint/brush cleaning
+            if not self.painter.opt.ink:
+                color_ind, _ = nearest_color(stroke.color_transform.detach().cpu().numpy(), 
+                                           color_palette.detach().cpu().numpy())
+                new_paint_color = color_ind != self.curr_color
+                if new_paint_color or self.consecutive_strokes_no_clean > 12:
+                    self.painter.clean_paint_brush()
+                    self.painter.clean_paint_brush()
+                    self.consecutive_strokes_no_clean = 0
+                    self.curr_color = color_ind
+                    new_paint_color = True
+                if self.consecutive_paints >= self.opt.how_often_to_get_paint or new_paint_color:
+                    self.painter.get_paint(color_ind)
+                    self.consecutive_paints = 0
+            
+            # Execute stroke
+            x, y = stroke.transformation.xt.item()*0.5+0.5, stroke.transformation.yt.item()*0.5+0.5
+            y = 1-y
+            x, y = min(max(x,0.),1.), min(max(y,0.),1.)  # safety
+            x_glob, y_glob,_ = canvas_to_global_coordinates(x,y,None,self.painter.opt)
+            stroke.execute(self.painter, x_glob, y_glob, stroke.transformation.a.item())
+        
+        self.painter.to_neutral()
+        
         return painting, color_palette, brush_strokes
 
 def main():
     client = PaintClient()
+    client.painter.to_neutral()
     
     # Example usage
     painting, color_palette, brush_strokes = client.optimize_painting(
-        n_strokes=100,
-        optim_iter=100,
+        n_strokes=400,
+        optim_iter=400,
         ink=True
     )
     
-    print(f"Received {len(brush_strokes)} brush strokes")
+    # Clean up at the end
+    if not client.painter.opt.ink:
+        client.painter.clean_paint_brush()
+        client.painter.clean_paint_brush()
     
-    # Visualize results
-    plt.figure(figsize=(15, 5))
-    
-    # Show original image from camera (the one used in optimization)
-    plt.subplot(1, 2, 1)
-    original = client.last_background.numpy()
-    # Remove batch dimension and transpose from (1, C, H, W) to (H, W, C)
-    original = original.squeeze(0).transpose(1, 2, 0)
-    plt.imshow(original)
-    plt.title('Original Image')
-    plt.axis('off')
-    
-    # Show optimized painting
-    plt.subplot(1, 2, 2)
-    result = painting.numpy()
-    # Handle batch dimension if present
-    if result.ndim == 4:
-        result = result.squeeze(0)
-    if result.shape[0] == 3:  # If channels first (C, H, W)
-        result = result.transpose(1, 2, 0)
-    plt.imshow(result)
-    plt.title('Optimized Painting')
-    plt.axis('off')
-    
-    # If we have a color palette, display it below
-    if color_palette is not None:
-        colors = color_palette.numpy()
-        n_colors = len(colors)
-        
-        # Create a small subplot for the color palette
-        plt.figure(figsize=(8, 1))
-        for i, color in enumerate(colors):
-            plt.subplot(1, n_colors, i+1)
-            plt.imshow([[color]])
-            plt.axis('off')
-        plt.suptitle('Color Palette')
-    
-    plt.show()
-    
-    # Optionally save the result
-    if result.shape[-1] == 3:  # If channels last
-        result = result[...,::-1]  # RGB to BGR for cv2
-    cv2.imwrite('optimized_painting.png', result * 255)
-    
-    # You can now use brush_strokes with your robot
-    for i, stroke in enumerate(brush_strokes):
-        print(f"Stroke {i}:")
-        print(f"  Position: ({stroke.transformation.xt.item():.3f}, {stroke.transformation.yt.item():.3f})")
-        print(f"  Rotation: {stroke.transformation.a.item():.3f}")
-        print(f"  Length: {stroke.stroke_length.item():.3f}")
-        print(f"  Bend: {stroke.stroke_bend.item():.3f}")
-        print(f"  Z: {stroke.stroke_z.item():.3f}")
-        print(f"  Alpha: {stroke.stroke_alpha.item():.3f}")
-        if hasattr(stroke, 'color_transform'):
-            print(f"  Color: {stroke.color_transform.tolist()}")
-        print(f"  Type: {'Ink' if not hasattr(stroke, 'color_transform') else 'Color'}")
+    client.painter.to_neutral()
+    client.painter.robot.good_night_robot()
 
 if __name__ == "__main__":
     main() 
