@@ -48,7 +48,7 @@ def get_cofrida_image_endpoint():
     # Get current canvas and convert to PIL
     current_canvas = decode_tensor(data['current_canvas'])
     current_canvas_pil = Image.fromarray(current_canvas.cpu().numpy().astype(np.uint8))
-    writer.add_image('images/current_canvas', format_img(current_canvas), 0)
+    writer.add_image('images/current_canvas', format_img(current_canvas.permute(2, 0, 1).unsqueeze(0)/255.), 0)
     
     # Generate multiple COFRIDA images
     target_imgs = []
@@ -63,7 +63,7 @@ def get_cofrida_image_endpoint():
             ).images[0]  # Returns PIL Image
             target_img = torch.from_numpy(np.array(image)).cpu()    
             target_imgs.append(target_img)
-            writer.add_image('images/target_img', format_img(target_img), i)
+            writer.add_image('images/target_img', format_img(target_img.permute(2, 0, 1).unsqueeze(0)/255.), i)
     
     return jsonify({
         'target_imgs': [encode_tensor(img) for img in target_imgs]
