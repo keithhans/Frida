@@ -10,6 +10,7 @@ from brush_stroke import BrushStroke
 import random
 import datetime
 from my_tensorboard import TensorBoard
+from paint_utils3 import init_brush_strokes
 
 app = Flask(__name__)
 device = torch.device('cuda')
@@ -37,6 +38,14 @@ def random_init_painting(opt, background_img, n_strokes, ink=False):
         brush_strokes=gridded_brush_strokes).to(device)
     return painting
 
+def initialize_painting(opt, background_img, n_strokes, ink, device='cuda'):
+    attn = background_img[0,:3].mean(dim=0)
+    brush_strokes = init_brush_strokes(opt, attn, n_strokes, ink)
+    painting = Painting(opt, 0, background_img=background_img, 
+        brush_strokes=brush_strokes).to(device)
+    return painting
+
+
 @app.route('/optimize_painting', methods=['POST'])
 def optimize_painting_endpoint():
     data = request.json
@@ -59,7 +68,7 @@ def optimize_painting_endpoint():
     load_objectives_data(opt)
 
     # Initialize painting
-    painting = random_init_painting(
+    painting = initialize_painting(
         opt, 
         background_img, 
         data['n_strokes'], 
