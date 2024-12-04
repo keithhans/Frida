@@ -60,7 +60,7 @@ def optimize_painting_endpoint():
     # Setup Tensorboard
     date_and_time = datetime.datetime.now()
     run_name = '' + date_and_time.strftime("%m_%d__%H_%M_%S")
-    opt.writer = TensorBoard('{}/{}'.format('tensorboard', run_name))
+    opt.writer = TensorBoard('{}/{}'.format(opt.tensorboard_dir, run_name))
 
     # Get background image
     background_img = decode_tensor(data['background_img'])
