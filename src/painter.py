@@ -81,7 +81,7 @@ class Painter():
                 if not self.opt.simulate:
                     self.camera = WebCam(opt)
                 else:
-                    self.camera = SimulatedWebCam(opt)
+                    self.camera = WebCam(opt)
                 break
             except Exception as e:
                 import traceback

@@ -10,7 +10,9 @@ import cv2
 from brush_stroke import BrushStroke
 from painter import Painter
 from tqdm import tqdm
-from utils import show_img, nearest_color, canvas_to_global_coordinates, get_colors
+from paint_utils3 import show_img, nearest_color, canvas_to_global_coordinates, get_colors
+from my_tensorboard import TensorBoard
+import datetime
 
 def encode_tensor(tensor):
     buffer = io.BytesIO()
@@ -27,6 +29,11 @@ class PaintClient:
         self.server_url = server_url
         self.opt = Options()
         self.opt.gather_options()
+
+        date_and_time = datetime.datetime.now()
+        run_name = '' + date_and_time.strftime("%m_%d__%H_%M_%S")
+        self.opt.writer = TensorBoard('{}/{}'.format(self.opt.tensorboard_dir, run_name))
+
         self.painter = Painter(self.opt)  # Initialize robot painter
         self.opt = self.painter.opt  # Update options from painter
         
@@ -177,7 +184,7 @@ def main():
     
     # Example usage
     painting, color_palette, brush_strokes = client.optimize_painting(
-        n_strokes=400,
+        n_strokes=100,
         optim_iter=400,
         ink=True
     )
