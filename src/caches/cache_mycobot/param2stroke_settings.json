@@ -1,7 +1,7 @@
 {
-    "w_p2i_m": 0.02,
-    "h_p2i_m": 0.005,
-    "xtra_room_horz_m": 0.01,
+    "w_p2i_m": 0.04,
+    "h_p2i_m": 0.022,
+    "xtra_room_horz_m": 0.005,
     "xtra_room_vert_m": 0.001,
-    "MAX_BEND": 0.005
+    "MAX_BEND": 0.01
 }
