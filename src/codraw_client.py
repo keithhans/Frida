@@ -198,19 +198,26 @@ class CoDrawClient:
             ########## Robot Turn ###########
             #################################
             
-            # Get current canvas for COFRIDA
-            curr_canvas = self.painter.camera.get_canvas()
-            curr_canvas = cv2.cvtColor(curr_canvas, cv2.COLOR_BGR2RGB)
-            curr_canvas_pil = Image.fromarray(curr_canvas.astype(np.uint8)).resize((512, 512))
-            current_canvas = torch.from_numpy(np.array(curr_canvas_pil))
+            while True:  # Allow multiple attempts for robot turn
+                # Get current canvas for COFRIDA
+                curr_canvas = self.painter.camera.get_canvas()
+                curr_canvas = cv2.cvtColor(curr_canvas, cv2.COLOR_BGR2RGB)
+                curr_canvas_pil = Image.fromarray(curr_canvas.astype(np.uint8)).resize((512, 512))
+                current_canvas = torch.from_numpy(np.array(curr_canvas_pil))
 
-            # Get user input for prompt
-            prompt = input("\nWhat would you like me to draw? Type 'done' if finished.\n:")
-            if prompt.lower() == 'done':
-                break
-            
-            # Get COFRIDA image with user selection
-            target_img = self.get_cofrida_image(current_canvas, prompt)
+                # Get user input for prompt
+                prompt = input("\nWhat would you like me to draw? Type 'done' if finished.\n:")
+                if prompt.lower() == 'done':
+                    return  # Exit the entire program
+                
+                # Get COFRIDA image with user selection
+                target_img = self.get_cofrida_image(current_canvas, prompt)
+                
+                # Ask if user wants to try a different prompt
+                retry = input("\nWould you like to try a different prompt? (y/n):\n")
+                if retry.lower() != 'y':
+                    break
+                print("\nOk, let's try something else!")
             
             # Get number of strokes
             num_strokes = int(input("How many strokes to use in this plan?\n:"))
