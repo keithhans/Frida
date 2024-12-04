@@ -330,9 +330,9 @@ def init_brush_strokes(opt, diff, n_strokes, ink):
     brush_strokes = []
     
     if ink:
-        diff[diff < 0.15] = 0
+        diff[diff < 0.3] = 0
     else:
-        diff[diff < 0.15] = 0.0001
+        diff[diff < 0.3] = 0.0001
     diff = diff.cpu().detach().numpy()
     points = (np.array(np.nonzero(diff))).astype(int)
 
