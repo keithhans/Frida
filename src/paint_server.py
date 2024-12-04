@@ -38,8 +38,8 @@ def random_init_painting(opt, background_img, n_strokes, ink=False):
         brush_strokes=gridded_brush_strokes).to(device)
     return painting
 
-def initialize_painting(opt, background_img, n_strokes, ink, device='cuda'):
-    attn = background_img[0,:3].mean(dim=0)
+def initialize_painting(opt, background_img, objective_img, n_strokes, ink, device='cuda'):
+    attn = objective_img[0,:3].mean(dim=0)
     brush_strokes = init_brush_strokes(opt, attn, n_strokes, ink)
     painting = Painting(opt, 0, background_img=background_img, 
         brush_strokes=brush_strokes).to(device)
@@ -71,6 +71,7 @@ def optimize_painting_endpoint():
     painting = initialize_painting(
         opt, 
         background_img, 
+        opt.objective_data_loaded[0] * 255, # Convert to uint8. [0] is a hack.
         data['n_strokes'], 
         ink=data.get('ink', False)
     )
