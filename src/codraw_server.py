@@ -49,6 +49,7 @@ def get_cofrida_image_endpoint():
     current_canvas = decode_tensor(data['current_canvas'])
     current_canvas_pil = Image.fromarray(current_canvas.cpu().numpy().astype(np.uint8))
     writer.add_image('images/current_canvas', format_img(current_canvas.permute(2, 0, 1).unsqueeze(0)/255.), 0)
+    writer.add_text('text/prompt', data['prompt'], 0)
     
     # Generate multiple COFRIDA images
     target_imgs = []
