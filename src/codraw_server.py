@@ -26,12 +26,13 @@ app = Flask(__name__)
 device = torch.device('cuda')
 
 # Initialize both models at startup
-print("Loading COFRIDA model...")
-cofrida_model = get_instruct_pix2pix_model(
-    lora_weights_path="skeeterman/CoFRIDA-Sharpie", 
-    device=device)
-cofrida_model.set_progress_bar_config(disable=True)
-print("COFRIDA model loaded successfully")
+# print("Loading COFRIDA model...")
+cofrida_model = None
+#cofrida_model = get_instruct_pix2pix_model(
+#    lora_weights_path="skeeterman/CoFRIDA-Sharpie", 
+#    device=device)
+#cofrida_model.set_progress_bar_config(disable=True)
+# print("COFRIDA model loaded successfully")
 
 def load_model_from_config(config, ckpt, vae_ckpt=None, verbose=False):
     print(f"Loading model from {ckpt}")
@@ -125,8 +126,8 @@ def get_cofrida_image_endpoint():
     
     if USE_INSTRUCT_PIX2PIX:
         # Use InstructPix2Pix model
-        # current_canvas_tensor = 2 * torch.tensor(np.array(current_canvas)).float() / 255 - 1
-        current_canvas_tensor = einops.rearrange(current_canvas, "h w c -> 1 c h w").to(device)
+        current_canvas_tensor = 2 * current_canvas.float() / 255 - 1
+        current_canvas_tensor = einops.rearrange(current_canvas_tensor, "h w c -> 1 c h w").to(device)
         
         with torch.no_grad(), autocast("cuda"), instruct_model.ema_scope():
             for i in range(data.get('n_options', 6)):
