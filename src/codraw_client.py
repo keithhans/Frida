@@ -269,6 +269,14 @@ class CoDrawClient:
         self.painter.to_neutral()
         self.painter.robot.good_night_robot()
 
+    def set_generation_mode(self, use_instruct_pix2pix=False):
+        """Set the image generation mode on the server"""
+        response = requests.post(
+            f'{self.server_url}/set_generation_mode',
+            json={'use_instruct_pix2pix': use_instruct_pix2pix}
+        )
+        return response.json()
+
 def main():
     client = CoDrawClient()
     client.run()
