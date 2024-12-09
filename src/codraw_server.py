@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import torch
 import io
 import base64
+import sys
 import numpy as np
 from options import Options
 from painting_optimization import optimize_painting
@@ -15,11 +16,11 @@ from torchvision.transforms import Resize
 import einops
 import k_diffusion as K
 from omegaconf import OmegaConf
+from torch import autocast
 
-sys.path.append("./instruct-pix2pix/stable_diffusion")
-from stable_diffusion.ldm.util import instantiate_from_config
+sys.path.append("./instruct_pix2pix/stable_diffusion")
+from instruct_pix2pix.stable_diffusion.ldm.util import instantiate_from_config
 import torch.nn as nn
-from torch.cuda.amp import autocast
 
 app = Flask(__name__)
 device = torch.device('cuda')
@@ -72,10 +73,10 @@ class CFGDenoiser(nn.Module):
 
 
 print("Loading InstructPix2Pix model...")
-config = OmegaConf.load("instruct-pix2pix/configs/generate.yaml")
+config = OmegaConf.load("instruct_pix2pix/configs/generate.yaml")
 instruct_model = load_model_from_config(
     config, 
-    "instruct-pix2pix/checkpoints/instruct-pix2pix-00-22000.ckpt"
+    "instruct_pix2pix/checkpoints/MagicBrush-epoch-52-step-4999.ckpt"
 ).to(device)
 instruct_model.eval()
 model_wrap = K.external.CompVisDenoiser(instruct_model)
@@ -124,10 +125,10 @@ def get_cofrida_image_endpoint():
     
     if USE_INSTRUCT_PIX2PIX:
         # Use InstructPix2Pix model
-        current_canvas_tensor = 2 * torch.tensor(np.array(current_canvas)).float() / 255 - 1
-        current_canvas_tensor = einops.rearrange(current_canvas_tensor, "h w c -> 1 c h w").to(device)
+        # current_canvas_tensor = 2 * torch.tensor(np.array(current_canvas)).float() / 255 - 1
+        current_canvas_tensor = einops.rearrange(current_canvas, "h w c -> 1 c h w").to(device)
         
-        with torch.no_grad(), autocast("cuda"):
+        with torch.no_grad(), autocast("cuda"), instruct_model.ema_scope():
             for i in range(data.get('n_options', 6)):
                 # Prepare conditioning
                 cond = {}
