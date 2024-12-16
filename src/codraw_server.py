@@ -26,13 +26,13 @@ app = Flask(__name__)
 device = torch.device('cuda')
 
 # Initialize both models at startup
-# print("Loading COFRIDA model...")
-cofrida_model = None
-#cofrida_model = get_instruct_pix2pix_model(
-#    lora_weights_path="skeeterman/CoFRIDA-Sharpie", 
-#    device=device)
-#cofrida_model.set_progress_bar_config(disable=True)
-# print("COFRIDA model loaded successfully")
+print("Loading COFRIDA model...")
+#cofrida_model = None
+cofrida_model = get_instruct_pix2pix_model(
+    lora_weights_path="skeeterman/CoFRIDA-Sharpie", 
+    device=device)
+cofrida_model.set_progress_bar_config(disable=True)
+print("COFRIDA model loaded successfully")
 
 def load_model_from_config(config, ckpt, vae_ckpt=None, verbose=False):
     print(f"Loading model from {ckpt}")
@@ -86,7 +86,7 @@ null_token = instruct_model.get_learned_conditioning([""])
 print("InstructPix2Pix model loaded successfully")
 
 # Add configuration for the switch
-USE_INSTRUCT_PIX2PIX = True  # Default to INSTRUCT_PIX2PIX 
+USE_INSTRUCT_PIX2PIX = False  # Default to INSTRUCT_PIX2PIX 
 
 def decode_tensor(encoded_data):
     decoded = base64.b64decode(encoded_data)
@@ -143,8 +143,8 @@ def get_cofrida_image_endpoint():
                 # Sample
                 steps = 20
                 sigmas = model_wrap.get_sigmas(steps)
-                text_cfg = 7.5 if i == 0 else random.uniform(6.0, 9.0)
-                image_cfg = 1.5 if i == 0 else random.uniform(1.2, 1.8)
+                text_cfg = 7 # 7.5 if i == 0 else random.uniform(6.0, 9.0)
+                image_cfg = 1 + 0.4 * i # 1.5 if i == 0 else random.uniform(1.2, 1.8)
 
                 extra_args = {
                     "cond": cond,
@@ -172,7 +172,7 @@ def get_cofrida_image_endpoint():
                     current_canvas_pil,
                     num_inference_steps=20,
                     num_images_per_prompt=1,
-                    image_guidance_scale=1.5 if i == 0 else random.uniform(1.01, 2.5)
+                    image_guidance_scale= 1 + 0.4 * i # if i == 0 else random.uniform(1.01, 2.5)
                 ).images[0]
                 target_img = torch.from_numpy(np.array(image)).cpu()    
                 target_imgs.append(target_img)
